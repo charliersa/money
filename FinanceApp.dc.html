@@ -1,0 +1,1985 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+@keyframes slideUp { from { transform: translateY(18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.15; } }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes toastIn { from { transform: translateY(-16px) translateX(-50%); opacity:0; } to { transform: translateY(0) translateX(-50%); opacity:1; } }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { background: var(--outer-bg); margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Plus Jakarta Sans', sans-serif; }
+::-webkit-scrollbar { display: none; }
+#analysis-pills { scrollbar-width: thin; scrollbar-color: rgba(108,142,245,0.35) transparent; }
+#analysis-pills::-webkit-scrollbar { display: block !important; height: 4px; }
+#analysis-pills::-webkit-scrollbar-thumb { background: rgba(108,142,245,0.35); border-radius: 2px; }
+#analysis-pills::-webkit-scrollbar-track { background: transparent; }
+a { color: inherit; text-decoration: none; }
+input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+input::placeholder { color: var(--text-6); }
+input:focus { border-color: rgba(108,142,245,0.4) !important; }
+select option { background: var(--card-bg); color: var(--text-1); }
+:root {
+  --outer-bg:#E4ECF8; --app-bg:#F0F5FE; --card-bg:#FFFFFF; --card-bg2:#EAF0FD;
+  --text-1:#0D1B2E; --text-2:#1D3154; --text-3b:#3A5278; --text-3:#526898;
+  --text-4:#7090B0; --text-5:#96B0CC; --text-6:#B0C4DC;
+  --border-1:rgba(70,100,160,0.07); --input-bg:rgba(70,100,160,0.04);
+  --border-2:rgba(70,100,160,0.10); --border-3:rgba(70,100,160,0.07);
+  --border-4:rgba(70,100,160,0.10);
+}
+@keyframes scanLine { 0%,100%{top:8%} 50%{top:80%} }
+@keyframes waveA { 0%,100%{height:6px} 50%{height:30px} }
+@keyframes waveB { 0%,100%{height:10px} 50%{height:46px} }
+@keyframes waveC { 0%,100%{height:5px} 50%{height:38px} }
+@keyframes spin { to{transform:rotate(360deg)} }
+</style>
+</helmet>
+
+<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse 70% 50% at 20% 15%, rgba(108,142,245,0.13) 0%, transparent 60%), radial-gradient(ellipse 50% 40% at 80% 85%, rgba(167,139,250,0.09) 0%, transparent 55%), var(--outer-bg);padding:20px 0;">
+<div style="width:390px;height:844px;background:var(--app-bg);border-radius:44px;overflow:hidden;position:relative;box-shadow:0 0 0 1px rgba(108,142,245,0.18), 0 32px 80px rgba(0,0,0,0.95);display:flex;flex-direction:column;">
+
+  <!-- Status Bar -->
+  <div style="height:44px;padding:14px 28px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+    <span style="font-size:13px;font-weight:700;color:var(--text-1);letter-spacing:-0.3px;">9:41</span>
+    <div style="display:flex;gap:5px;align-items:center;">
+      <div style="display:flex;gap:2px;align-items:flex-end;"><div style="width:3px;height:5px;background:var(--text-1);border-radius:1px;"></div><div style="width:3px;height:7px;background:var(--text-1);border-radius:1px;"></div><div style="width:3px;height:9px;background:var(--text-1);border-radius:1px;"></div><div style="width:3px;height:11px;background:var(--text-1);border-radius:1px;opacity:0.25;"></div></div>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M8 8.5a1 1 0 110 2 1 1 0 010-2z" fill="var(--text-1)"/><path d="M5 6.5C5.9 5.6 6.9 5 8 5s2.1.6 3 1.5" stroke="var(--text-1)" stroke-width="1.4" stroke-linecap="round" fill="none"/><path d="M2.5 4C4.1 2.4 5.9 1.5 8 1.5s3.9.9 5.5 2.5" stroke="var(--text-1)" stroke-width="1.4" stroke-linecap="round" fill="none" opacity="0.5"/></svg>
+      <div style="display:flex;align-items:center;gap:1px;"><div style="width:23px;height:11px;border:1.5px solid rgba(255,255,255,0.45);border-radius:3px;padding:1.5px;"><div style="width:75%;height:100%;background:var(--text-1);border-radius:1px;"></div></div><div style="width:2px;height:5px;background:rgba(255,255,255,0.4);border-radius:0 1px 1px 0;"></div></div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div style="padding:10px 24px 6px;flex-shrink:0;">
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:fadeIn 0.3s ease;"><div style="font-size:12px;color:var(--text-3);font-weight:500;margin-bottom:1px;">歡迎回來 👋</div><div style="font-size:23px;font-weight:800;color:var(--text-1);letter-spacing:-0.6px;">財務總覽</div></div>
+    </sc-if>
+    <sc-if value="{{ isRecords }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn 0.3s ease;display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:23px;font-weight:800;color:var(--text-1);letter-spacing:-0.6px;">帳簿管理</div>
+        <div onClick="{{ openExpenseTx }}" style="font-size:12px;color:#6C8EF5;font-weight:600;background:rgba(108,142,245,0.1);padding:7px 14px;border-radius:20px;cursor:pointer;border:1px solid rgba(108,142,245,0.2);">+ 新增</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isAnalysis }}" hint-placeholder-val="{{ false }}"><div style="animation:fadeIn 0.3s ease;font-size:23px;font-weight:800;color:var(--text-1);letter-spacing:-0.6px;">財務分析</div></sc-if>
+    <sc-if value="{{ isInsurance }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn 0.3s ease;display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:23px;font-weight:800;color:var(--text-1);letter-spacing:-0.6px;">保險保障</div>
+        <div onClick="{{ openPolicySheet }}" style="font-size:12px;color:#A78BFA;font-weight:600;background:rgba(167,139,250,0.1);padding:7px 14px;border-radius:20px;cursor:pointer;border:1px solid rgba(167,139,250,0.2);">+ 新增保單</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn 0.3s ease;display:flex;align-items:center;gap:10px;">
+        <sc-if value="{{ isProfileSub }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ backToProfile }}" style="width:34px;height:34px;background:rgba(108,142,245,0.1);border-radius:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(108,142,245,0.15);">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 11L5 7l4-4" stroke="#6C8EF5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </sc-if>
+        <div style="font-size:23px;font-weight:800;color:var(--text-1);letter-spacing:-0.6px;">{{ profileTitle }}</div>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- Content -->
+  <div style="flex:1;overflow-y:auto;overflow-x:hidden;">
+
+    <!-- ═══ HOME ═══ -->
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:slideUp 0.35s ease;padding:8px 20px 100px;">
+        <div style="background:linear-gradient(135deg,var(--card-bg2) 0%,var(--card-bg2) 60%,var(--card-bg2) 100%);border-radius:24px;padding:26px 24px;margin-bottom:14px;position:relative;overflow:hidden;border:1px solid rgba(108,142,245,0.22);">
+          <div style="position:absolute;top:-30px;right:-30px;width:130px;height:130px;background:radial-gradient(circle, rgba(108,142,245,0.18) 0%, transparent 70%);border-radius:50%;pointer-events:none;"></div>
+          <div style="font-size:11px;color:var(--text-4);font-weight:600;margin-bottom:6px;letter-spacing:0.8px;text-transform:uppercase;">淨資產</div>
+          <div style="font-size:38px;font-weight:800;color:var(--text-1);letter-spacing:-2px;line-height:1;margin-bottom:6px;">{{ netWorthText }}</div>
+          <div style="font-size:12px;color:var(--text-3);">{{ netWorthSub }}</div>
+          <div style="display:flex;gap:16px;margin-top:18px;">
+            <div style="display:flex;align-items:center;gap:6px;"><div style="width:6px;height:6px;border-radius:50%;background:#34D399;"></div><span style="font-size:12px;color:var(--text-3);">收入 {{ allIncomeText }}</span></div>
+            <div style="display:flex;align-items:center;gap:6px;"><div style="width:6px;height:6px;border-radius:50%;background:#F87171;"></div><span style="font-size:12px;color:var(--text-3);">支出 {{ allExpenseText }}</span></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:14px;">
+          <div style="flex:1;background:var(--card-bg);border-radius:18px;padding:16px;border:1px solid rgba(52,211,153,0.15);">
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;">
+              <div style="width:28px;height:28px;background:rgba(52,211,153,0.12);border-radius:9px;display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 11V2M3 5.5l3.5-3.5 3.5 3.5" stroke="#34D399" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span style="font-size:11px;color:var(--text-3);font-weight:500;">本月收入</span>
+            </div>
+            <div style="font-size:19px;font-weight:700;color:#34D399;letter-spacing:-0.5px;">{{ monthIncomeText }}</div>
+          </div>
+          <div style="flex:1;background:var(--card-bg);border-radius:18px;padding:16px;border:1px solid rgba(248,113,113,0.15);">
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;">
+              <div style="width:28px;height:28px;background:rgba(248,113,113,0.12);border-radius:9px;display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 2v9M10 8l-3.5 3.5L3 8" stroke="#F87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span style="font-size:11px;color:var(--text-3);font-weight:500;">本月支出</span>
+            </div>
+            <div style="font-size:19px;font-weight:700;color:#F87171;letter-spacing:-0.5px;">{{ monthExpenseText }}</div>
+          </div>
+        </div>
+
+        <!-- Budget Preview -->
+        <div style="background:var(--card-bg);border-radius:20px;padding:18px 20px;margin-bottom:14px;border:1px solid var(--border-1);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="font-size:14px;font-weight:700;color:var(--text-1);">預算執行</div>
+            <div onClick="{{ goBudget }}" style="font-size:12px;color:#6C8EF5;cursor:pointer;font-weight:600;">管理 →</div>
+          </div>
+          <sc-if value="{{ hasBudget }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span style="font-size:12px;color:var(--text-3b);">{{ budgetSpentText }} / {{ budgetTotalText }}</span>
+                <span style="font-size:12px;color:#6C8EF5;font-weight:600;">{{ budgetPctText }}</span>
+              </div>
+              <div style="background:var(--border-3);border-radius:6px;height:7px;overflow:hidden;"><div style="width:{{ budgetPctWidth }};height:100%;background:linear-gradient(90deg,#6C8EF5,#A78BFA);border-radius:6px;transition:width 0.6s ease;"></div></div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:6px;">結餘 {{ budgetRemainText }}</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ noBudget }}" hint-placeholder-val="{{ true }}">
+            <div style="text-align:center;padding:8px 0 4px;">
+              <div style="font-size:12px;color:var(--text-3);margin-bottom:10px;">尚未設定預算目標</div>
+              <div onClick="{{ goBudget }}" style="display:inline-block;font-size:12px;color:#6C8EF5;background:rgba(108,142,245,0.1);padding:7px 18px;border-radius:20px;cursor:pointer;font-weight:600;border:1px solid rgba(108,142,245,0.2);">立即設定</div>
+            </div>
+          </sc-if>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div style="background:var(--card-bg);border-radius:20px;padding:18px 20px;margin-bottom:14px;border:1px solid var(--border-1);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="font-size:14px;font-weight:700;color:var(--text-1);">最近交易</div>
+            <div onClick="{{ goRecords }}" style="font-size:12px;color:#6C8EF5;cursor:pointer;font-weight:600;">全部 →</div>
+          </div>
+          <sc-if value="{{ hasRecentTxs }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ recentTxs }}" as="tx" hint-placeholder-count="0">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--input-bg);">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div style="width:36px;height:36px;background:var(--border-1);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">{{ tx.emoji }}</div>
+                  <div><div style="font-size:13px;font-weight:600;color:var(--text-1);">{{ tx.category }}</div><div style="font-size:11px;color:var(--text-3);">{{ tx.dateDisplay }}</div></div>
+                </div>
+                <div style="font-size:14px;font-weight:700;color:{{ tx.amountColor }};">{{ tx.amountText }}</div>
+              </div>
+            </sc-for>
+          </sc-if>
+          <sc-if value="{{ noRecentTxs }}" hint-placeholder-val="{{ true }}">
+            <div style="text-align:center;padding:10px 0;"><div style="font-size:12px;color:var(--text-3);margin-bottom:8px;">尚無交易記錄</div><div onClick="{{ openExpenseTx }}" style="display:inline-block;font-size:12px;font-weight:600;color:#6C8EF5;background:rgba(108,142,245,0.1);padding:7px 16px;border-radius:20px;cursor:pointer;border:1px solid rgba(108,142,245,0.2);">記錄第一筆</div></div>
+          </sc-if>
+        </div>
+
+        <!-- Insurance Preview -->
+        <div style="background:var(--card-bg);border-radius:20px;padding:18px 20px;border:1px solid rgba(167,139,250,0.15);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;background:rgba(167,139,250,0.12);border-radius:9px;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1l4.5 1.8V7c0 2.7-1.8 5-4.5 6.3C4.3 12 2.5 9.7 2.5 7V2.8L7 1z" stroke="#A78BFA" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div style="font-size:14px;font-weight:700;color:var(--text-1);">保險保障</div></div>
+            <div onClick="{{ goInsurance }}" style="font-size:12px;color:#A78BFA;cursor:pointer;font-weight:600;">管理 →</div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <div style="flex:1;background:rgba(167,139,250,0.06);border-radius:12px;padding:12px;text-align:center;border:1px solid rgba(167,139,250,0.1);"><div style="font-size:22px;font-weight:800;color:#A78BFA;">{{ policyCount }}</div><div style="font-size:10px;color:var(--text-3);margin-top:2px;">有效保單</div></div>
+            <div style="flex:1;background:rgba(248,113,113,0.06);border-radius:12px;padding:12px;text-align:center;border:1px solid rgba(248,113,113,0.1);"><div style="font-size:22px;font-weight:800;color:#F87171;">{{ gapCount }}</div><div style="font-size:10px;color:var(--text-3);margin-top:2px;">保障缺口</div></div>
+            <div style="flex:1;background:rgba(233,180,76,0.06);border-radius:12px;padding:12px;text-align:center;border:1px solid rgba(233,180,76,0.1);"><div style="font-size:16px;font-weight:800;color:#E9B44C;letter-spacing:-0.5px;">{{ annualPremiumText }}</div><div style="font-size:10px;color:var(--text-3);margin-top:2px;">年繳保費</div></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ═══ RECORDS ═══ -->
+    <sc-if value="{{ isRecords }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:slideUp 0.35s ease;">
+        <div style="padding:0 20px;margin-bottom:14px;">
+          <div style="display:flex;gap:0;background:var(--card-bg);border-radius:14px;padding:3px;border:1px solid var(--border-1);">
+            <div onClick="{{ setRecordsTab_transactions }}" style="flex:1;padding:8px;text-align:center;border-radius:11px;font-size:13px;font-weight:600;cursor:pointer;background:{{ recTransBg }};color:{{ recTransColor }};transition:all 0.2s;">記帳記錄</div>
+            <div onClick="{{ setRecordsTab_budget }}" style="flex:1;padding:8px;text-align:center;border-radius:11px;font-size:13px;font-weight:600;cursor:pointer;background:{{ recBudgetBg }};color:{{ recBudgetColor }};transition:all 0.2s;">預算管理</div>
+          </div>
+        </div>
+
+        <!-- TRANSACTIONS -->
+        <sc-if value="{{ isTransactions }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:0 20px 100px;">
+            <div style="display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:14px;">
+              <div onClick="{{ prevMonth }}" style="width:30px;height:30px;background:rgba(108,142,245,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(108,142,245,0.15);"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 9L4.5 6l3-3" stroke="#6C8EF5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div style="font-size:15px;font-weight:700;color:var(--text-1);">{{ currentMonthLabel }}</div>
+              <div onClick="{{ nextMonth }}" style="width:30px;height:30px;background:rgba(108,142,245,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(108,142,245,0.15);"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 3l3 3-3 3" stroke="#6C8EF5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:16px;">
+              <div style="flex:1;background:var(--card-bg);border-radius:14px;padding:12px;border:1px solid var(--border-1);text-align:center;"><div style="font-size:10px;color:var(--text-3);margin-bottom:3px;">收入</div><div style="font-size:15px;font-weight:700;color:#34D399;">{{ monthIncomeText }}</div></div>
+              <div style="flex:1;background:var(--card-bg);border-radius:14px;padding:12px;border:1px solid var(--border-1);text-align:center;"><div style="font-size:10px;color:var(--text-3);margin-bottom:3px;">支出</div><div style="font-size:15px;font-weight:700;color:#F87171;">{{ monthExpenseText }}</div></div>
+              <div style="flex:1;background:var(--card-bg);border-radius:14px;padding:12px;border:1px solid var(--border-1);text-align:center;"><div style="font-size:10px;color:var(--text-3);margin-bottom:3px;">結餘</div><div style="font-size:15px;font-weight:700;color:{{ balanceColor }};">{{ monthBalanceText }}</div></div>
+            </div>
+
+            <sc-if value="{{ hasTxs }}" hint-placeholder-val="{{ false }}">
+              <div style="background:var(--card-bg);border-radius:18px;padding:6px 16px;border:1px solid var(--border-1);">
+                <sc-for list="{{ currentMonthTxItems }}" as="tx" hint-placeholder-count="0">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--input-bg);">
+                    <div style="display:flex;align-items:center;gap:11px;">
+                      <div style="width:38px;height:38px;background:var(--border-1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">{{ tx.emoji }}</div>
+                      <div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                          <div style="font-size:13px;font-weight:600;color:var(--text-1);">{{ tx.category }}</div>
+                          <sc-if value="{{ tx.hasBank }}" hint-placeholder-val="{{ false }}"><div style="font-size:10px;font-weight:600;color:#6C8EF5;background:rgba(108,142,245,0.1);border:1px solid rgba(108,142,245,0.18);border-radius:8px;padding:2px 7px;white-space:nowrap;">{{ tx.bankLabel }}</div></sc-if>
+                        </div>
+                        <div style="font-size:11px;color:var(--text-3);margin-top:1px;">{{ tx.dateDisplay }}</div>
+                      </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+                      <div style="font-size:14px;font-weight:700;color:{{ tx.amountColor }};">{{ tx.amountText }}</div>
+                      <div onClick="{{ tx.onDelete }}" style="font-size:10px;color:var(--text-6);cursor:pointer;">刪除</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ noTxs }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;align-items:center;padding:30px 0;">
+                <div style="width:64px;height:64px;background:rgba(108,142,245,0.08);border-radius:20px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;"><svg width="30" height="30" viewBox="0 0 30 30" fill="none"><path d="M7 13h16M7 19h10" stroke="#6C8EF5" stroke-width="2" stroke-linecap="round"/><rect x="3" y="5" width="24" height="20" rx="4" stroke="#6C8EF5" stroke-width="2"/></svg></div>
+                <div style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:5px;">本月尚無交易</div>
+                <div style="font-size:12px;color:var(--text-3);text-align:center;margin-bottom:18px;">點擊右下角「+」記錄收支</div>
+                <div onClick="{{ openExpenseTx }}" style="font-size:13px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6C8EF5,#A78BFA);padding:11px 26px;border-radius:20px;cursor:pointer;">記錄第一筆</div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <!-- BUDGET -->
+        <sc-if value="{{ isBudgetPage }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 20px 100px;">
+            <div style="background:linear-gradient(135deg,var(--card-bg2),var(--card-bg2));border-radius:20px;padding:18px 20px;margin-bottom:14px;border:1px solid rgba(108,142,245,0.2);">
+              <div style="font-size:11px;color:var(--text-4);font-weight:600;margin-bottom:5px;letter-spacing:0.6px;">本月預算總覽</div>
+              <div style="display:flex;align-items:flex-end;gap:8px;margin-bottom:12px;">
+                <div style="font-size:28px;font-weight:800;color:var(--text-1);letter-spacing:-1px;">{{ budgetSpentText }}</div>
+                <div style="font-size:13px;color:var(--text-3);margin-bottom:4px;">/ {{ budgetTotalText }}</div>
+              </div>
+              <div style="background:var(--border-3);border-radius:6px;height:6px;overflow:hidden;"><div style="width:{{ budgetPctWidth }};height:100%;background:linear-gradient(90deg,#6C8EF5,#A78BFA);border-radius:6px;transition:width 0.6s ease;"></div></div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:6px;">結餘 {{ budgetRemainText }}</div>
+            </div>
+            <div style="font-size:12px;color:var(--text-3);font-weight:600;margin-bottom:10px;letter-spacing:0.4px;">各類別預算</div>
+            <sc-for list="{{ budgetItems }}" as="bud" hint-placeholder-count="5">
+              <div style="background:var(--card-bg);border-radius:16px;padding:14px 16px;border:1px solid var(--border-1);margin-bottom:8px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                  <div style="display:flex;align-items:center;gap:9px;"><div style="font-size:18px;">{{ bud.emoji }}</div><div><div style="font-size:13px;font-weight:600;color:var(--text-1);">{{ bud.name }}</div><div style="font-size:11px;color:var(--text-3);">{{ bud.spentText }} / {{ bud.limitText }}</div></div></div>
+                  <div onClick="{{ bud.onSetBudget }}" style="font-size:12px;color:#6C8EF5;cursor:pointer;font-weight:600;">設定</div>
+                </div>
+                <div style="background:var(--border-3);border-radius:4px;height:5px;overflow:hidden;"><div style="width:{{ bud.pctWidth }};height:100%;background:{{ bud.barColor }};border-radius:4px;transition:width 0.5s ease;"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ═══ ANALYSIS ═══ -->
+    <sc-if value="{{ isAnalysis }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:slideUp 0.35s ease;">
+        <div id="analysis-pills" style="display:flex;gap:7px;padding:0 20px;overflow-x:auto;margin-bottom:16px;padding-bottom:6px;">
+          <div onClick="{{ setAnalysisTab_trend }}" style="white-space:nowrap;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;cursor:pointer;flex-shrink:0;background:{{ trendBg }};color:{{ trendColor }};border:{{ trendBorder }};transition:all 0.2s;">月度趨勢</div>
+          <div onClick="{{ setAnalysisTab_category }}" style="white-space:nowrap;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;cursor:pointer;flex-shrink:0;background:{{ catBg }};color:{{ catColor }};border:{{ catBorder }};transition:all 0.2s;">支出分類</div>
+          <div onClick="{{ setAnalysisTab_assets }}" style="white-space:nowrap;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;cursor:pointer;flex-shrink:0;background:{{ assetsBg }};color:{{ assetsColor }};border:{{ assetsBorder }};transition:all 0.2s;">資產配置</div>
+          <div onClick="{{ setAnalysisTab_cashflow }}" style="white-space:nowrap;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;cursor:pointer;flex-shrink:0;background:{{ cashBg }};color:{{ cashColor }};border:{{ cashBorder }};transition:all 0.2s;">現金流量</div>
+          <div onClick="{{ setAnalysisTab_premium }}" style="white-space:nowrap;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;cursor:pointer;flex-shrink:0;background:{{ premBg }};color:{{ premColor }};border:{{ premBorder }};transition:all 0.2s;">保費比例</div>
+        </div>
+        <div style="padding:0 20px 100px;">
+          <sc-if value="{{ isTrend }}" hint-placeholder-val="{{ true }}">
+            <div style="background:var(--card-bg);border-radius:20px;padding:18px 16px;border:1px solid var(--border-1);">
+              <div style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:2px;">月度收支趨勢</div>
+              <div style="font-size:11px;color:var(--text-3);margin-bottom:14px;">近 6 個月收入與支出走勢</div>
+              <div style="height:190px;"><canvas id="chart-trend"></canvas></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isCategory }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--card-bg);border-radius:20px;padding:18px 16px;border:1px solid var(--border-1);">
+              <div style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:2px;">支出類別分析</div>
+              <div style="font-size:11px;color:var(--text-3);margin-bottom:14px;">本月各類別支出占比</div>
+              <div style="height:190px;display:flex;align-items:center;justify-content:center;"><canvas id="chart-category"></canvas></div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px;">
+                <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:2px;background:#6C8EF5;"></div><span style="font-size:11px;color:var(--text-3);">餐飲</span></div>
+                <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:2px;background:#34D399;"></div><span style="font-size:11px;color:var(--text-3);">交通</span></div>
+                <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:2px;background:#E9B44C;"></div><span style="font-size:11px;color:var(--text-3);">娛樂</span></div>
+                <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:2px;background:#F87171;"></div><span style="font-size:11px;color:var(--text-3);">購物</span></div>
+                <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:2px;background:#A78BFA;"></div><span style="font-size:11px;color:var(--text-3);">其他</span></div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isAssets }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--card-bg);border-radius:20px;padding:18px 16px;border:1px solid var(--border-1);">
+              <div style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:2px;">資產配置分析</div>
+              <div style="font-size:11px;color:var(--text-3);margin-bottom:14px;">各類資產佔比</div>
+              <div style="height:180px;display:flex;align-items:center;justify-content:center;"><canvas id="chart-assets"></canvas></div>
+              <div style="margin-top:14px;">
+                <sc-for list="{{ assetItems }}" as="ast" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--input-bg);">
+                    <div style="display:flex;align-items:center;gap:8px;"><div style="width:9px;height:9px;border-radius:3px;background:{{ ast.color }};"></div><span style="font-size:13px;color:var(--text-3b);">{{ ast.key }}</span></div>
+                    <span style="font-size:13px;color:var(--text-1);font-weight:600;">{{ ast.amountText }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isCashflow }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--card-bg);border-radius:20px;padding:18px 16px;border:1px solid var(--border-1);">
+              <div style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:2px;">現金流量</div>
+              <div style="font-size:11px;color:var(--text-3);margin-bottom:14px;">近 6 個月流入與流出</div>
+              <div style="height:190px;"><canvas id="chart-cashflow"></canvas></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isPremium }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--card-bg);border-radius:20px;padding:18px 16px;border:1px solid var(--border-1);">
+              <div style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:2px;">保費支出分析</div>
+              <div style="font-size:11px;color:var(--text-3);margin-bottom:14px;">各險種年繳保費比例</div>
+              <div style="height:180px;display:flex;align-items:center;justify-content:center;"><canvas id="chart-premium"></canvas></div>
+              <div style="background:rgba(167,139,250,0.06);border-radius:14px;padding:14px;margin-top:14px;border:1px solid rgba(167,139,250,0.12);">
+                <div style="font-size:12px;font-weight:700;color:#A78BFA;margin-bottom:6px;">保費配置建議</div>
+                <div style="font-size:12px;color:var(--text-4);line-height:1.6;">年繳保費建議不超過年收入的 10–15%，優先配置壽險與醫療險，再視需求加強意外與重大傷病保障。</div>
+              </div>
+            </div>
+          </sc-if>
+          <div onClick="{{ triggerAI }}" style="background:linear-gradient(135deg,rgba(108,142,245,0.12),rgba(167,139,250,0.12));border:1px solid rgba(108,142,245,0.25);border-radius:20px;padding:16px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-top:14px;">
+            <div style="width:40px;height:40px;background:linear-gradient(135deg,#6C8EF5,#A78BFA);border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2l2.4 5.4 5.6.5-4 3.8 1.2 5.6L10 14.6 4.8 17.3 6 11.7 2 7.9l5.6-.5L10 2z" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
+            <div style="flex:1;"><div style="font-size:14px;font-weight:700;color:var(--text-1);">AI 智慧分析</div><div style="font-size:12px;color:var(--text-4);margin-top:2px;">點擊獲取個人化財務建議</div></div>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="#6C8EF5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ═══ INSURANCE ═══ -->
+    <sc-if value="{{ isInsurance }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:slideUp 0.35s ease;">
+        <div style="padding:0 20px;margin-bottom:14px;">
+          <div style="display:flex;background:var(--card-bg);border-radius:14px;padding:3px;border:1px solid var(--border-1);">
+            <div onClick="{{ setInsuranceTab_policies }}" style="flex:1;padding:8px;text-align:center;border-radius:11px;font-size:12px;font-weight:600;cursor:pointer;background:{{ polBg }};color:{{ polColor }};transition:all 0.2s;">我的保單</div>
+            <div onClick="{{ setInsuranceTab_coverage }}" style="flex:1;padding:8px;text-align:center;border-radius:11px;font-size:12px;font-weight:600;cursor:pointer;background:{{ covBg }};color:{{ covColor }};transition:all 0.2s;">保障分析</div>
+            <div onClick="{{ setInsuranceTab_claims }}" style="flex:1;padding:8px;text-align:center;border-radius:11px;font-size:12px;font-weight:600;cursor:pointer;background:{{ claimsBg }};color:{{ claimsColor }};transition:all 0.2s;">理賠記錄</div>
+          </div>
+        </div>
+        <div style="padding:0 20px 100px;">
+          <sc-if value="{{ isPolicies }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:10px;margin-bottom:14px;">
+              <div style="flex:1;background:var(--card-bg);border-radius:14px;padding:12px;border:1px solid rgba(167,139,250,0.15);text-align:center;"><div style="font-size:22px;font-weight:800;color:#A78BFA;">{{ policyCount }}</div><div style="font-size:10px;color:var(--text-3);margin-top:2px;">有效保單</div></div>
+              <div style="flex:1;background:var(--card-bg);border-radius:14px;padding:12px;border:1px solid var(--border-1);text-align:center;"><div style="font-size:15px;font-weight:800;color:var(--text-1);letter-spacing:-0.5px;">{{ annualPremiumText }}</div><div style="font-size:10px;color:var(--text-3);margin-top:2px;">年繳保費</div></div>
+              <div style="flex:1;background:var(--card-bg);border-radius:14px;padding:12px;border:1px solid rgba(233,180,76,0.15);text-align:center;"><div style="font-size:22px;font-weight:800;color:#E9B44C;">{{ gapCount }}</div><div style="font-size:10px;color:var(--text-3);margin-top:2px;">保障缺口</div></div>
+            </div>
+            <sc-if value="{{ hasPolicies }}" hint-placeholder-val="{{ false }}">
+              <sc-for list="{{ policyItems }}" as="pol" hint-placeholder-count="0">
+                <div style="background:var(--card-bg);border-radius:16px;padding:14px 16px;border:1px solid rgba(167,139,250,0.12);margin-bottom:10px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:22px;">{{ pol.typeEmoji }}</span><div><div style="font-size:14px;font-weight:700;color:var(--text-1);">{{ pol.name }}</div><div style="font-size:11px;color:var(--text-3);">{{ pol.company }} · {{ pol.type }}</div></div></div>
+                    <div onClick="{{ pol.onDelete }}" style="font-size:11px;color:var(--text-6);cursor:pointer;padding:4px 8px;background:rgba(248,113,113,0.08);border-radius:8px;">刪除</div>
+                  </div>
+                  <div style="display:flex;gap:10px;">
+                    <div style="background:rgba(167,139,250,0.08);border-radius:10px;padding:8px 12px;flex:1;"><div style="font-size:10px;color:var(--text-3);">{{ pol.freq }}</div><div style="font-size:13px;font-weight:700;color:#A78BFA;">{{ pol.premiumText }}</div></div>
+                    <div style="background:rgba(233,180,76,0.08);border-radius:10px;padding:8px 12px;flex:1;"><div style="font-size:10px;color:var(--text-3);">到期日</div><div style="font-size:13px;font-weight:700;color:#E9B44C;">{{ pol.expiry }}</div></div>
+                  </div>
+                </div>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{ noPolicies }}" hint-placeholder-val="{{ true }}">
+              <div style="background:var(--card-bg);border-radius:20px;padding:28px 20px;border:1px solid var(--border-1);display:flex;flex-direction:column;align-items:center;">
+                <div style="width:60px;height:60px;background:rgba(167,139,250,0.1);border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;"><svg width="30" height="30" viewBox="0 0 30 30" fill="none"><path d="M15 2l9 3.6V14c0 5.6-3.6 10.2-9 13.2C9.6 24.2 6 19.6 6 14V5.6L15 2z" stroke="#A78BFA" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                <div style="font-size:15px;font-weight:700;color:var(--text-1);margin-bottom:6px;">尚無保單記錄</div>
+                <div style="font-size:12px;color:var(--text-3);text-align:center;line-height:1.6;margin-bottom:18px;">點擊右上角「+ 新增保單」<br>開始建立您的保障清單</div>
+              </div>
+            </sc-if>
+          </sc-if>
+          <sc-if value="{{ isCoverage }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--card-bg);border-radius:20px;padding:18px 16px;border:1px solid var(--border-1);margin-bottom:14px;">
+              <div style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:2px;">保障缺口分析</div>
+              <div style="font-size:11px;color:var(--text-3);margin-bottom:18px;">各項保障充足度評估</div>
+              <sc-for list="{{ coverageItems }}" as="cov" hint-placeholder-count="4">
+                <div style="margin-bottom:16px;">
+                  <div style="display:flex;justify-content:space-between;margin-bottom:7px;">
+                    <span style="font-size:13px;color:var(--text-2);font-weight:500;">{{ cov.label }}</span>
+                    <span style="font-size:12px;font-weight:600;color:{{ cov.statusColor }};">{{ cov.statusText }}</span>
+                  </div>
+                  <div style="background:var(--border-3);border-radius:6px;height:7px;overflow:hidden;"><div style="width:{{ cov.pctWidth }};height:100%;background:{{ cov.barColor }};border-radius:6px;transition:width 0.5s ease;"></div></div>
+                  <div style="font-size:11px;color:var(--text-3);margin-top:4px;">建議：{{ cov.target }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div onClick="{{ triggerAI }}" style="background:linear-gradient(135deg,rgba(167,139,250,0.12),rgba(108,142,245,0.12));border:1px solid rgba(167,139,250,0.25);border-radius:20px;padding:16px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;">
+              <div style="width:40px;height:40px;background:linear-gradient(135deg,#A78BFA,#6C8EF5);border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2l2.4 5.4 5.6.5-4 3.8 1.2 5.6L10 14.6 4.8 17.3 6 11.7 2 7.9l5.6-.5L10 2z" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
+              <div><div style="font-size:14px;font-weight:700;color:var(--text-1);">AI 保障建議</div><div style="font-size:12px;color:var(--text-4);margin-top:2px;">點擊獲取個人化保障規劃建議</div></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isClaims }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;align-items:center;padding:50px 0;">
+              <div style="width:72px;height:72px;background:rgba(52,211,153,0.08);border-radius:22px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;"><svg width="36" height="36" viewBox="0 0 36 36" fill="none"><path d="M18 3l11 4.4V16c0 7-4.4 12.4-11 15.6C11.4 28.4 7 23 7 16V7.4L18 3z" stroke="#34D399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 18l4 4 8-8" stroke="#34D399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div style="font-size:16px;font-weight:700;color:var(--text-1);margin-bottom:6px;">尚無理賠記錄</div>
+              <div style="font-size:12px;color:var(--text-3);text-align:center;line-height:1.7;">保持健康，遠離理賠！</div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ═══ PROFILE ═══ -->
+    <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:slideUp 0.35s ease;padding:0 20px 100px;">
+        <sc-if value="{{ isProfileMain }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:24px;">
+            <div style="width:70px;height:70px;background:linear-gradient(135deg,#6C8EF5,#A78BFA);border-radius:22px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:28px;">{{ profileAvatar }}</div>
+            <div style="font-size:18px;font-weight:700;color:var(--text-1);margin-bottom:3px;">{{ profileGreeting }}</div>
+            <div style="font-size:12px;color:var(--text-3);">完善個人資料以獲得更準確的分析</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div onClick="{{ goAssets }}" style="background:var(--card-bg);border-radius:16px;padding:14px 16px;border:1px solid var(--border-1);display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+              <div style="display:flex;align-items:center;gap:11px;"><div style="width:38px;height:38px;background:rgba(52,211,153,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="10" width="4" height="6" rx="1" fill="#34D399"/><rect x="7" y="6" width="4" height="10" rx="1" fill="#34D399" opacity="0.6"/><rect x="12" y="2" width="4" height="14" rx="1" fill="#34D399" opacity="0.35"/></svg></div><div><div style="font-size:14px;font-weight:600;color:var(--text-1);">資產彙整</div><div style="font-size:11px;color:var(--text-3);">總資產 {{ totalAssetsText }}</div></div></div>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div onClick="{{ goAI }}" style="background:var(--card-bg);border-radius:16px;padding:14px 16px;border:1px solid rgba(108,142,245,0.15);display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+              <div style="display:flex;align-items:center;gap:11px;"><div style="width:38px;height:38px;background:linear-gradient(135deg,rgba(108,142,245,0.2),rgba(167,139,250,0.2));border-radius:12px;display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2l2.2 4.9 4.8.5-3.5 3.3 1 5-4.5-2.4-4.5 2.4 1-5L1 7.4l4.8-.5L9 2z" stroke="#6C8EF5" stroke-width="1.4" stroke-linejoin="round"/></svg></div><div><div style="font-size:14px;font-weight:600;color:var(--text-1);">AI 智慧分析</div><div style="font-size:11px;color:var(--text-3);">個人化財務建議</div></div></div>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div onClick="{{ goSettings }}" style="background:var(--card-bg);border-radius:16px;padding:14px 16px;border:1px solid var(--border-1);display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+              <div style="display:flex;align-items:center;gap:11px;"><div style="width:38px;height:38px;background:rgba(90,96,128,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="2.5" stroke="var(--text-3b)" stroke-width="1.4"/><path d="M9 1.5v2M9 14.5v2M1.5 9h2M14.5 9h2M3.9 3.9l1.4 1.4M12.7 12.7l1.4 1.4M3.9 14.1l1.4-1.4M12.7 5.3l1.4-1.4" stroke="var(--text-3b)" stroke-width="1.4" stroke-linecap="round"/></svg></div><div><div style="font-size:14px;font-weight:600;color:var(--text-1);">帳戶設定</div><div style="font-size:11px;color:var(--text-3);">個人資料與偏好</div></div></div>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ASSETS sub-page -->
+        <sc-if value="{{ isProfileAssets }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="background:linear-gradient(135deg,var(--card-bg2),var(--card-bg));border-radius:20px;padding:20px;border:1px solid rgba(52,211,153,0.2);text-align:center;">
+              <div style="font-size:12px;color:var(--text-3);margin-bottom:5px;letter-spacing:0.5px;">總資產</div>
+              <div style="font-size:34px;font-weight:800;color:var(--text-1);letter-spacing:-1.5px;">{{ totalAssetsText }}</div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:4px;">{{ assetLastUpdated }}</div>
+            </div>
+            <div style="background:var(--card-bg);border-radius:20px;padding:18px;border:1px solid var(--border-1);">
+              <div style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:14px;">資產分類</div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <sc-for list="{{ assetItems }}" as="ast" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 12px;background:{{ ast.bg }};border-radius:12px;border:1px solid {{ ast.borderColor }};">
+                    <div style="display:flex;align-items:center;gap:9px;"><span style="font-size:16px;">{{ ast.emoji }}</span><span style="font-size:13px;font-weight:500;color:var(--text-1);">{{ ast.key }}</span></div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <div style="font-size:13px;font-weight:600;color:var(--text-1);">{{ ast.amountText }}</div>
+                      <div onClick="{{ ast.onEdit }}" style="font-size:11px;color:{{ ast.color }};cursor:pointer;font-weight:600;padding:3px 8px;background:var(--border-1);border-radius:8px;">編輯</div>
+                      <sc-if value="{{ ast.isCustom }}" hint-placeholder-val="{{ false }}">
+                        <div onClick="{{ ast.onDelete }}" style="font-size:11px;color:var(--text-6);cursor:pointer;padding:3px 8px;background:rgba(248,113,113,0.07);border-radius:8px;">刪除</div>
+                      </sc-if>
+                    </div>
+                  </div>
+                </sc-for>
+                <div onClick="{{ openAddAssetCat }}" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:12px;background:rgba(108,142,245,0.05);border-radius:12px;border:1px dashed rgba(108,142,245,0.22);cursor:pointer;margin-top:2px;">
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v11M2 7.5h11" stroke="#6C8EF5" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span style="font-size:13px;color:#6C8EF5;font-weight:600;">新增資產類別</span>
+                </div>
+              </div>
+            </div>
+            <!-- Asset History -->
+            <sc-if value="{{ hasAssetHistory }}" hint-placeholder-val="{{ false }}">
+              <div style="background:var(--card-bg);border-radius:20px;padding:18px;border:1px solid var(--border-1);">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                  <div style="font-size:14px;font-weight:700;color:var(--text-1);">異動紀錄</div>
+                  <div onClick="{{ clearAssetHistory }}" style="font-size:11px;color:var(--text-6);cursor:pointer;">清除</div>
+                </div>
+                <sc-for list="{{ assetHistoryDisplay }}" as="rec" hint-placeholder-count="0">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--input-bg);">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                      <div style="width:32px;height:32px;background:{{ rec.dotBg }};border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">{{ rec.emoji }}</div>
+                      <div><div style="font-size:13px;color:var(--text-2);font-weight:500;">{{ rec.assetType }}</div><div style="font-size:11px;color:var(--text-3);margin-top:1px;">{{ rec.dateDisplay }}</div></div>
+                    </div>
+                    <div style="text-align:right;">
+                      <div style="font-size:13px;font-weight:700;color:var(--text-1);">{{ rec.newAmountText }}</div>
+                      <div style="font-size:10px;color:{{ rec.changeColor }};margin-top:1px;">{{ rec.changeText }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noAssetHistory }}" hint-placeholder-val="{{ true }}">
+              <div style="background:rgba(255,255,255,0.02);border-radius:16px;padding:14px;border:1px dashed var(--border-3);text-align:center;">
+                <div style="font-size:12px;color:var(--text-5);">點擊「編輯」更新資產金額，系統將自動記錄每次異動</div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <!-- AI sub-page -->
+        <sc-if value="{{ isProfileAI }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="background:linear-gradient(135deg,rgba(108,142,245,0.14),rgba(167,139,250,0.14));border-radius:20px;padding:24px;border:1px solid rgba(108,142,245,0.22);text-align:center;">
+              <div style="width:58px;height:58px;background:linear-gradient(135deg,#6C8EF5,#A78BFA);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;"><svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M13 3l3.2 7.2 7.3.6-5.3 5 1.6 7.5L13 19.4l-6.8 3.9 1.6-7.5-5.3-5 7.3-.6L13 3z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
+              <div style="font-size:18px;font-weight:800;color:var(--text-1);margin-bottom:6px;">AI 財務助理</div>
+              <div style="font-size:12px;color:var(--text-4);line-height:1.6;">根據您的財務資料，提供個人化<br>收支分析、預算建議與保障規劃</div>
+            </div>
+            <div style="background:var(--card-bg);border-radius:14px;padding:14px;border:1px solid var(--border-1);display:flex;align-items:center;gap:11px;"><span style="font-size:22px;">📊</span><div><div style="font-size:13px;font-weight:600;color:var(--text-1);margin-bottom:2px;">財務健康評分</div><div style="font-size:11px;color:var(--text-3);">分析收支比例、儲蓄率與負債狀況</div></div></div>
+            <div style="background:var(--card-bg);border-radius:14px;padding:14px;border:1px solid var(--border-1);display:flex;align-items:center;gap:11px;"><span style="font-size:22px;">🎯</span><div><div style="font-size:13px;font-weight:600;color:var(--text-1);margin-bottom:2px;">目標規劃建議</div><div style="font-size:11px;color:var(--text-3);">協助規劃退休、購屋等財務目標</div></div></div>
+            <div style="background:var(--card-bg);border-radius:14px;padding:14px;border:1px solid var(--border-1);display:flex;align-items:center;gap:11px;"><span style="font-size:22px;">🛡️</span><div><div style="font-size:13px;font-weight:600;color:var(--text-1);margin-bottom:2px;">保障缺口診斷</div><div style="font-size:11px;color:var(--text-3);">評估保險是否覆蓋主要風險</div></div></div>
+            <div onClick="{{ triggerAI }}" style="background:linear-gradient(135deg,#6C8EF5,#A78BFA);border-radius:20px;padding:15px;text-align:center;cursor:pointer;font-size:15px;font-weight:700;color:#fff;">開始 AI 分析</div>
+          </div>
+        </sc-if>
+
+        <!-- SETTINGS sub-page -->
+        <sc-if value="{{ isProfileSettings }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="background:var(--card-bg);border-radius:20px;padding:18px;border:1px solid var(--border-1);">
+              <div style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:14px;">個人資料</div>
+              <div style="display:flex;flex-direction:column;gap:12px;">
+                <div><div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">姓名</div><input type="text" value="{{ profileName }}" onChange="{{ onProfileName }}" placeholder="請輸入姓名" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:14px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" /></div>
+                <div><div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">電子郵件</div><input type="email" value="{{ profileEmail }}" onChange="{{ onProfileEmail }}" placeholder="請輸入 Email" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:14px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" /></div>
+                <div><div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">月收入（用於 AI 分析）</div><input type="number" value="{{ profileMonthlyIncome }}" onChange="{{ onProfileIncome }}" placeholder="0" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:14px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" min="0" /></div>
+              </div>
+            </div>
+            <div style="background:var(--card-bg);border-radius:20px;padding:18px;border:1px solid var(--border-1);">
+              <div style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:14px;">顯示與通知</div>
+              <div style="display:flex;flex-direction:column;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border-1);">
+                  <div><div style="font-size:13px;color:var(--text-2);font-weight:500;">深色模式</div><div style="font-size:11px;color:var(--text-3);margin-top:1px;">切換深色／淺色介面</div></div>
+                  <div onClick="{{ toggleDarkMode }}" style="width:46px;height:26px;background:{{ darkToggleBg }};border-radius:13px;position:relative;cursor:pointer;transition:background 0.3s;flex-shrink:0;"><div style="width:20px;height:20px;background:#fff;border-radius:50%;position:absolute;top:3px;{{ darkToggleDot }};box-shadow:0 2px 6px rgba(0,0,0,0.25);transition:all 0.25s;"></div></div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border-1);">
+                  <span style="font-size:13px;color:var(--text-2);">每月預算提醒</span>
+                  <div style="width:46px;height:26px;background:rgba(108,142,245,0.2);border-radius:13px;border:1px solid rgba(108,142,245,0.3);position:relative;cursor:pointer;"><div style="width:20px;height:20px;background:rgba(108,142,245,0.6);border-radius:50%;position:absolute;top:2px;left:2px;"></div></div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;">
+                  <span style="font-size:13px;color:var(--text-2);">保費到期通知</span>
+                  <div style="width:46px;height:26px;background:linear-gradient(135deg,#6C8EF5,#A78BFA);border-radius:13px;position:relative;cursor:pointer;"><div style="width:20px;height:20px;background:#fff;border-radius:50%;position:absolute;top:3px;right:3px;box-shadow:0 2px 6px rgba(0,0,0,0.25);"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+  </div><!-- /scrollable content -->
+
+  <!-- FAB -->
+  <sc-if value="{{ showFab }}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute;bottom:90px;right:18px;z-index:20;">
+      <sc-if value="{{ fabOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;margin-bottom:10px;animation:slideUp 0.2s ease;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text-1);background:var(--card-bg);padding:6px 12px;border-radius:20px;border:1px solid var(--border-2);white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.4);">掃描發票</div>
+            <div onClick="{{ openScanSheet }}" style="width:40px;height:40px;background:#6C8EF5;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(108,142,245,0.45);"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="#fff" stroke-width="1.5"/><rect x="11" y="2" width="5" height="5" rx="1" stroke="#fff" stroke-width="1.5"/><rect x="2" y="11" width="5" height="5" rx="1" stroke="#fff" stroke-width="1.5"/><path d="M12 13h4M14 11v4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text-1);background:var(--card-bg);padding:6px 12px;border-radius:20px;border:1px solid var(--border-2);white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.4);">語音輸入</div>
+            <div onClick="{{ openVoiceSheet }}" style="width:40px;height:40px;background:#A78BFA;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(167,139,250,0.45);"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="6.5" y="2" width="5" height="8" rx="2.5" stroke="#fff" stroke-width="1.5"/><path d="M3.5 9.5C3.5 12.5 5.7 15 9 15s5.5-2.5 5.5-5.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M9 15v2" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text-1);background:var(--card-bg);padding:6px 12px;border-radius:20px;border:1px solid var(--border-2);white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.4);">記錄支出</div>
+            <div onClick="{{ openExpenseTx }}" style="width:40px;height:40px;background:#F87171;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(248,113,113,0.4);"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 14V4M4 9h10" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text-1);background:var(--card-bg);padding:6px 12px;border-radius:20px;border:1px solid var(--border-2);white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.4);">記錄收入</div>
+            <div onClick="{{ openIncomeTx }}" style="width:40px;height:40px;background:#34D399;border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(52,211,153,0.4);"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 14V4M4 9h10" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+          </div>
+        </div>
+      </sc-if>
+      <div onClick="{{ toggleFab }}" style="width:50px;height:50px;background:linear-gradient(135deg,#6C8EF5,#A78BFA);border-radius:17px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(108,142,245,0.45);cursor:pointer;transform:{{ fabRotate }};transition:transform 0.25s ease;">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 4v14M4 11h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Toast -->
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;top:56px;left:50%;transform:translateX(-50%);background:rgba(30,42,68,0.96);border:1px solid rgba(52,211,153,0.3);border-radius:20px;padding:8px 18px;display:flex;align-items:center;gap:7px;z-index:80;animation:toastIn 0.3s ease;backdrop-filter:blur(10px);white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" fill="rgba(52,211,153,0.2)"/><path d="M4 7l2.5 2.5L10 5" stroke="#34D399" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span style="font-size:12px;font-weight:600;color:#34D399;">{{ toastMsg }}</span>
+    </div>
+  </sc-if>
+
+  <!-- Bottom Tab Bar -->
+  <div style="height:78px;background:var(--app-bg);border-top:1px solid var(--border-1);display:flex;align-items:center;flex-shrink:0;padding:0 4px 10px;">
+    <div onClick="{{ goHome }}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:8px 0;"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H14v-5H8v5H4a1 1 0 01-1-1V9.5z" stroke="{{ homeTabColor }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-size:10px;font-weight:600;color:{{ homeTabColor }};">首頁</span></div>
+    <div onClick="{{ goRecords }}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:8px 0;"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M7 4H5a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2" stroke="{{ recordsTabColor }}" stroke-width="1.8" stroke-linecap="round"/><rect x="7" y="2" width="8" height="4" rx="1" stroke="{{ recordsTabColor }}" stroke-width="1.8"/><path d="M7 11h8M7 15h5" stroke="{{ recordsTabColor }}" stroke-width="1.8" stroke-linecap="round"/></svg><span style="font-size:10px;font-weight:600;color:{{ recordsTabColor }};">帳簿</span></div>
+    <div onClick="{{ goAnalysis }}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:8px 0;"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 17l5-5 4 3 6-8" stroke="{{ analysisTabColor }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="3" width="16" height="16" rx="2" stroke="{{ analysisTabColor }}" stroke-width="1.8"/></svg><span style="font-size:10px;font-weight:600;color:{{ analysisTabColor }};">分析</span></div>
+    <div onClick="{{ goInsurance }}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:8px 0;"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2l8 3.2V11c0 5-3.5 9.2-8 11.2C6.5 20.2 3 16 3 11V5.2L11 2z" stroke="{{ insuranceTabColor }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-size:10px;font-weight:600;color:{{ insuranceTabColor }};">保障</span></div>
+    <div onClick="{{ goProfile }}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:8px 0;"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="7" r="4" stroke="{{ profileTabColor }}" stroke-width="1.8"/><path d="M3 20.5c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="{{ profileTabColor }}" stroke-width="1.8" stroke-linecap="round"/></svg><span style="font-size:10px;font-weight:600;color:{{ profileTabColor }};">我的</span></div>
+  </div>
+
+  <!-- AI Panel -->
+  <sc-if value="{{ showAIPanel }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:50;">
+      <div onClick="{{ closeAI }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:var(--card-bg);border-radius:24px 24px 0 0;border-top:1px solid rgba(108,142,245,0.2);box-shadow:0 -12px 40px rgba(0,0,0,0.6);animation:sheetUp 0.4s cubic-bezier(0.16,1,0.3,1);max-height:72%;display:flex;flex-direction:column;">
+        <div style="display:flex;justify-content:center;padding:12px 0 4px;flex-shrink:0;"><div style="width:36px;height:4px;background:var(--border-4);border-radius:2px;"></div></div>
+        <div style="padding:10px 18px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-1);flex-shrink:0;">
+          <div style="display:flex;align-items:center;gap:10px;"><div style="width:36px;height:36px;background:linear-gradient(135deg,#6C8EF5,#A78BFA);border-radius:12px;display:flex;align-items:center;justify-content:center;"><svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M8.5 2l2 4.6 4.5.4-3.3 3.1 1 4.8-4.2-2.3-4.2 2.3 1-4.8L1.5 7l4.5-.4L8.5 2z" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg></div><div><div style="font-size:15px;font-weight:700;color:var(--text-1);">AI 財務助理</div><div style="font-size:11px;color:#34D399;font-weight:500;">● 分析中</div></div></div>
+          <div onClick="{{ closeAI }}" style="width:30px;height:30px;background:var(--border-3);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2L2 10" stroke="var(--text-4)" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        </div>
+        <div style="overflow-y:auto;padding:14px 18px 20px;display:flex;flex-direction:column;gap:10px;">
+          <sc-for list="{{ aiMessages }}" as="msg" hint-placeholder-count="2">
+            <sc-if value="{{ msg.isSys }}" hint-placeholder-val="{{ false }}"><div style="text-align:center;font-size:11px;color:var(--text-3);padding:4px 0;">{{ msg.text }}</div></sc-if>
+            <sc-if value="{{ msg.isAI }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;gap:8px;align-items:flex-start;animation:slideUp 0.3s ease;">
+                <div style="width:26px;height:26px;background:linear-gradient(135deg,#6C8EF5,#A78BFA);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5l1.5 3.3 3.3.3-2.4 2.3.7 3.4L6 9.1l-3.1 1.7.7-3.4L1.2 5.1l3.3-.3L6 1.5z" stroke="#fff" stroke-width="1.1" stroke-linejoin="round"/></svg></div>
+                <div style="background:rgba(108,142,245,0.08);border:1px solid rgba(108,142,245,0.14);border-radius:4px 14px 14px 14px;padding:10px 13px;max-width:calc(100% - 36px);"><div style="font-size:13px;color:var(--text-2);line-height:1.65;">{{ msg.text }}</div></div>
+              </div>
+            </sc-if>
+          </sc-for>
+          <sc-if value="{{ aiTyping }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:8px;align-items:flex-start;">
+              <div style="width:26px;height:26px;background:linear-gradient(135deg,#6C8EF5,#A78BFA);border-radius:9px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5l1.5 3.3 3.3.3-2.4 2.3.7 3.4L6 9.1l-3.1 1.7.7-3.4L1.2 5.1l3.3-.3L6 1.5z" stroke="#fff" stroke-width="1.1" stroke-linejoin="round"/></svg></div>
+              <div style="background:rgba(108,142,245,0.08);border:1px solid rgba(108,142,245,0.14);border-radius:4px 14px 14px 14px;padding:13px 16px;"><div style="display:flex;gap:4px;align-items:center;"><div style="width:5px;height:5px;border-radius:50%;background:#6C8EF5;animation:blink 1.2s ease infinite;"></div><div style="width:5px;height:5px;border-radius:50%;background:#6C8EF5;animation:blink 1.2s ease 0.35s infinite;"></div><div style="width:5px;height:5px;border-radius:50%;background:#6C8EF5;animation:blink 1.2s ease 0.7s infinite;"></div></div></div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ═══ ADD TRANSACTION SHEET ═══ -->
+  <sc-if value="{{ showTxSheet }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;">
+      <div onClick="{{ closeTxSheet }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:var(--card-bg);border-radius:24px 24px 0 0;border-top:1px solid rgba(108,142,245,0.2);animation:sheetUp 0.38s cubic-bezier(0.16,1,0.3,1);max-height:88%;display:flex;flex-direction:column;">
+        <div style="display:flex;justify-content:center;padding:12px 0 4px;flex-shrink:0;"><div style="width:36px;height:4px;background:var(--border-4);border-radius:2px;"></div></div>
+        <div style="overflow-y:auto;padding:6px 20px 32px;">
+          <!-- Type Toggle -->
+          <div style="display:flex;background:var(--border-1);border-radius:16px;padding:3px;margin-bottom:20px;">
+            <div onClick="{{ setTxExpense }}" style="flex:1;padding:11px;text-align:center;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;background:{{ txExpenseBg }};color:{{ txExpenseColor }};transition:all 0.2s;">💸 支出</div>
+            <div onClick="{{ setTxIncome }}" style="flex:1;padding:11px;text-align:center;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;background:{{ txIncomeBg }};color:{{ txIncomeColor }};transition:all 0.2s;">💰 收入</div>
+          </div>
+          <!-- Amount -->
+          <div style="text-align:center;margin-bottom:22px;">
+            <div style="font-size:11px;color:var(--text-3);margin-bottom:8px;letter-spacing:0.5px;">金額 (NT$)</div>
+            <input type="number" value="{{ txAmount }}" onChange="{{ onTxAmount }}" placeholder="0" min="0" style="font-size:46px;font-weight:800;color:var(--text-1);background:transparent;border:none;border-bottom:2px solid rgba(108,142,245,0.35);outline:none;text-align:center;width:100%;padding:4px 0 8px;font-family:Plus Jakarta Sans,sans-serif;" />
+          </div>
+          <!-- Category -->
+          <div style="font-size:11px;color:var(--text-4);margin-bottom:10px;font-weight:500;">類別</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;">
+            <sc-for list="{{ categoryItems }}" as="cat" hint-placeholder-count="6">
+              <div onClick="{{ cat.onSelect }}" style="background:{{ cat.bg }};border:{{ cat.border }};border-radius:14px;padding:10px 6px;text-align:center;cursor:pointer;transition:all 0.15s;">
+                <div style="font-size:22px;margin-bottom:4px;">{{ cat.emoji }}</div>
+                <div style="font-size:11px;font-weight:600;color:{{ cat.color }};">{{ cat.name }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <!-- Bank / Account -->
+          <div style="margin-bottom:12px;">
+            <div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">帳戶 / 銀行</div>
+            <select value="{{ txBank }}" onChange="{{ onTxBank }}" style="background:var(--app-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:13px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;-webkit-appearance:none;appearance:none;">
+              <sc-for list="{{ bankOptions }}" as="bk" hint-placeholder-count="3">
+                <option value="{{ bk.value }}">{{ bk.label }}</option>
+              </sc-for>
+            </select>
+          </div>
+          <sc-if value="{{ isCustomBank }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-bottom:12px;animation:fadeIn 0.2s ease;">
+              <input type="text" value="{{ txBankCustom }}" onChange="{{ onTxBankCustom }}" placeholder="輸入銀行 / 帳戶名稱，例：滙豐銀行" style="background:var(--input-bg);border:1px solid rgba(108,142,245,0.25);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:13px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" />
+              <div style="font-size:10px;color:var(--text-4);margin-top:6px;">儲存後會自動加入下拉選單，下次可直接選取</div>
+            </div>
+          </sc-if>
+          <!-- Date -->
+          <div style="margin-bottom:12px;">
+            <div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">日期</div>
+            <input type="date" value="{{ txDate }}" onChange="{{ onTxDate }}" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:13px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;color-scheme:{{ colorScheme }};" />
+          </div>
+          <!-- Note -->
+          <div style="margin-bottom:22px;">
+            <div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">備註（選填）</div>
+            <input type="text" value="{{ txNote }}" onChange="{{ onTxNote }}" placeholder="例：午餐、計程車、購物…" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:13px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" />
+          </div>
+          <!-- Buttons -->
+          <div style="display:flex;gap:10px;">
+            <div onClick="{{ closeTxSheet }}" style="flex:1;padding:14px;text-align:center;background:var(--border-1);border-radius:16px;font-size:14px;font-weight:600;color:var(--text-3);cursor:pointer;">取消</div>
+            <div onClick="{{ submitTx }}" style="flex:2;padding:14px;text-align:center;background:{{ txSubmitBg }};border-radius:16px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;">{{ txSubmitLabel }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ═══ BUDGET SHEET ═══ -->
+  <sc-if value="{{ showBudgetSheet }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;">
+      <div onClick="{{ closeBudgetSheet }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:var(--card-bg);border-radius:24px 24px 0 0;border-top:1px solid rgba(108,142,245,0.2);padding:16px 20px 40px;animation:sheetUp 0.35s cubic-bezier(0.16,1,0.3,1);">
+        <div style="display:flex;justify-content:center;margin-bottom:16px;"><div style="width:36px;height:4px;background:var(--border-4);border-radius:2px;"></div></div>
+        <div style="font-size:18px;font-weight:800;color:var(--text-1);margin-bottom:4px;">設定預算</div>
+        <div style="font-size:13px;color:var(--text-3);margin-bottom:22px;">{{ budgetCategory }}</div>
+        <div style="margin-bottom:22px;">
+          <div style="font-size:11px;color:var(--text-4);margin-bottom:8px;font-weight:500;">每月預算上限 (NT$)</div>
+          <input type="number" value="{{ budgetAmount }}" onChange="{{ onBudgetAmount }}" placeholder="例：5000" min="0" style="background:var(--input-bg);border:1px solid rgba(108,142,245,0.25);border-radius:14px;padding:14px 18px;color:var(--text-1);font-size:22px;font-weight:700;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" />
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div onClick="{{ closeBudgetSheet }}" style="flex:1;padding:14px;text-align:center;background:var(--border-1);border-radius:16px;font-size:14px;font-weight:600;color:var(--text-3);cursor:pointer;">取消</div>
+          <div onClick="{{ submitBudget }}" style="flex:2;padding:14px;text-align:center;background:linear-gradient(135deg,#6C8EF5,#A78BFA);border-radius:16px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;">確認設定</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ═══ POLICY SHEET ═══ -->
+  <sc-if value="{{ showPolicySheet }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;">
+      <div onClick="{{ closePolicySheet }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:var(--card-bg);border-radius:24px 24px 0 0;border-top:1px solid rgba(167,139,250,0.2);max-height:85%;display:flex;flex-direction:column;animation:sheetUp 0.38s cubic-bezier(0.16,1,0.3,1);">
+        <div style="padding:14px 20px 12px;border-bottom:1px solid var(--border-1);flex-shrink:0;">
+          <div style="display:flex;justify-content:center;margin-bottom:12px;"><div style="width:36px;height:4px;background:var(--border-4);border-radius:2px;"></div></div>
+          <div style="font-size:18px;font-weight:800;color:var(--text-1);">新增保單</div>
+        </div>
+        <div style="overflow-y:auto;padding:18px 20px 32px;display:flex;flex-direction:column;gap:14px;">
+          <div><div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">保單名稱 *</div><input type="text" value="{{ policyName }}" onChange="{{ onPolicyName }}" placeholder="例：國泰人壽定期壽險" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:14px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" /></div>
+          <div><div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">險種類型</div>
+            <select value="{{ policyType }}" onChange="{{ onPolicyType }}" style="background:var(--app-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:14px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;-webkit-appearance:none;appearance:none;">
+              <option value="壽險">❤️ 壽險</option>
+              <option value="醫療險">🏥 醫療險</option>
+              <option value="意外險">⚡ 意外險</option>
+              <option value="重大傷病險">🧬 重大傷病險</option>
+              <option value="其他">📋 其他</option>
+            </select>
+          </div>
+          <div><div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">保險公司</div><input type="text" value="{{ policyCompany }}" onChange="{{ onPolicyCompany }}" placeholder="例：國泰人壽、富邦人壽…" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:14px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" /></div>
+          <div style="display:flex;gap:10px;">
+            <div style="flex:2;"><div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">保費金額 (NT$)</div><input type="number" value="{{ policyPremium }}" onChange="{{ onPolicyPremium }}" placeholder="0" min="0" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:14px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" /></div>
+            <div style="flex:1;"><div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">繳費頻率</div>
+              <select value="{{ policyFreq }}" onChange="{{ onPolicyFreq }}" style="background:var(--app-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 10px;color:var(--text-1);font-size:13px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;-webkit-appearance:none;appearance:none;">
+                <option value="年繳">年繳</option>
+                <option value="半年繳">半年</option>
+                <option value="月繳">月繳</option>
+              </select>
+            </div>
+          </div>
+          <div><div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">到期日</div><input type="date" value="{{ policyExpiry }}" onChange="{{ onPolicyExpiry }}" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:13px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;color-scheme:dark;" /></div>
+          <div style="display:flex;gap:10px;padding-top:4px;">
+            <div onClick="{{ closePolicySheet }}" style="flex:1;padding:14px;text-align:center;background:var(--border-1);border-radius:16px;font-size:14px;font-weight:600;color:var(--text-3);cursor:pointer;">取消</div>
+            <div onClick="{{ submitPolicy }}" style="flex:2;padding:14px;text-align:center;background:linear-gradient(135deg,#A78BFA,#6C8EF5);border-radius:16px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;">新增保單</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ═══ SCAN SHEET ═══ -->
+  <sc-if value="{{ showScanSheet }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;">
+      <div onClick="{{ closeScanSheet }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:var(--card-bg);border-radius:24px 24px 0 0;border-top:1px solid rgba(108,142,245,0.25);max-height:86%;display:flex;flex-direction:column;animation:sheetUp 0.38s cubic-bezier(0.16,1,0.3,1);">
+        <div style="padding:14px 20px 12px;border-bottom:1px solid var(--border-1);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;justify-content:center;position:absolute;left:50%;transform:translateX(-50%);top:12px;"><div style="width:36px;height:4px;background:var(--border-4);border-radius:2px;"></div></div>
+          <div style="font-size:17px;font-weight:800;color:var(--text-1);margin-top:16px;">📷 掃描發票</div>
+          <div onClick="{{ closeScanSheet }}" style="width:28px;height:28px;background:var(--border-1);border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-top:16px;"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 1l9 9M10 1L1 10" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        </div>
+        <div style="overflow-y:auto;padding:20px;">
+          <!-- READY -->
+          <sc-if value="{{ isScanReady }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+              <div style="width:100%;max-width:280px;height:190px;border:2px solid #6C8EF5;border-radius:16px;position:relative;background:rgba(108,142,245,0.05);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                <div style="position:absolute;top:0;left:0;width:16px;height:16px;border-top:3px solid #6C8EF5;border-left:3px solid #6C8EF5;border-radius:4px 0 0 0;"></div>
+                <div style="position:absolute;top:0;right:0;width:16px;height:16px;border-top:3px solid #6C8EF5;border-right:3px solid #6C8EF5;border-radius:0 4px 0 0;"></div>
+                <div style="position:absolute;bottom:0;left:0;width:16px;height:16px;border-bottom:3px solid #6C8EF5;border-left:3px solid #6C8EF5;border-radius:0 0 0 4px;"></div>
+                <div style="position:absolute;bottom:0;right:0;width:16px;height:16px;border-bottom:3px solid #6C8EF5;border-right:3px solid #6C8EF5;border-radius:0 0 4px 0;"></div>
+                <div style="text-align:center;padding:0 16px;"><div style="font-size:36px;margin-bottom:8px;">🧾</div><div style="font-size:12px;color:var(--text-3);line-height:1.6;">拍下整張發票<br>對準 QR Code 辨識最準確</div></div>
+              </div>
+              <div style="font-size:12px;color:var(--text-4);text-align:center;line-height:1.6;">電子發票 QR Code：直接讀出金額與日期<br>一般收據：自動文字辨識（OCR）填入金額</div>
+              <label style="background:linear-gradient(135deg,#6C8EF5,#A78BFA);border-radius:18px;padding:14px 20px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;width:100%;text-align:center;box-shadow:0 6px 20px rgba(108,142,245,0.35);display:block;">📷 拍照掃描
+                <input type="file" accept="image/*" capture="environment" onChange="{{ onScanFile }}" style="display:none;" />
+              </label>
+              <label style="background:var(--border-1);border:1px solid var(--border-2);border-radius:18px;padding:12px 20px;font-size:14px;font-weight:600;color:var(--text-3);cursor:pointer;width:100%;text-align:center;display:block;">🖼 從相簿選擇照片
+                <input type="file" accept="image/*" onChange="{{ onScanFile }}" style="display:none;" />
+              </label>
+            </div>
+          </sc-if>
+          <!-- SCANNING -->
+          <sc-if value="{{ isScanScanning }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:10px 0;">
+              <div style="width:100%;max-width:280px;height:190px;border:2px solid #6C8EF5;border-radius:16px;position:relative;overflow:hidden;background:rgba(108,142,245,0.05);">
+                <img src="{{ scanImage }}" style="width:100%;height:100%;object-fit:cover;opacity:0.5;" />
+                <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#6C8EF5,transparent);animation:scanLine 1.5s ease-in-out infinite;box-shadow:0 0 8px rgba(108,142,245,0.8);"></div>
+                <div style="position:absolute;top:0;left:0;width:16px;height:16px;border-top:3px solid #6C8EF5;border-left:3px solid #6C8EF5;border-radius:4px 0 0 0;"></div>
+                <div style="position:absolute;top:0;right:0;width:16px;height:16px;border-top:3px solid #6C8EF5;border-right:3px solid #6C8EF5;border-radius:0 4px 0 0;"></div>
+                <div style="position:absolute;bottom:0;left:0;width:16px;height:16px;border-bottom:3px solid #6C8EF5;border-left:3px solid #6C8EF5;border-radius:0 0 0 4px;"></div>
+                <div style="position:absolute;bottom:0;right:0;width:16px;height:16px;border-bottom:3px solid #6C8EF5;border-right:3px solid #6C8EF5;border-radius:0 0 4px 0;"></div>
+              </div>
+              <div style="font-size:14px;font-weight:600;color:var(--text-1);">{{ scanStatusText }}</div>
+              <div style="width:100%;max-width:280px;background:var(--border-3);border-radius:6px;height:6px;overflow:hidden;"><div style="width:{{ scanProgressWidth }};height:100%;background:linear-gradient(90deg,#6C8EF5,#A78BFA);border-radius:6px;transition:width 0.3s ease;"></div></div>
+              <div style="font-size:11px;color:var(--text-4);text-align:center;line-height:1.6;">第一次辨識需要下載語言模型<br>之後會快很多</div>
+            </div>
+          </sc-if>
+          <!-- RESULT -->
+          <sc-if value="{{ isScanResult }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px;padding-bottom:20px;">
+              <div style="display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,rgba(108,142,245,0.1),rgba(167,139,250,0.1));border-radius:18px;padding:14px;border:1px solid rgba(108,142,245,0.2);">
+                <img src="{{ scanImage }}" style="width:62px;height:62px;border-radius:12px;object-fit:cover;flex-shrink:0;border:1px solid var(--border-2);" />
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:11px;color:var(--text-3);margin-bottom:3px;">{{ scanSourceLabel }}</div>
+                  <div style="font-size:22px;font-weight:800;color:var(--text-1);letter-spacing:-0.8px;">{{ scanHeadline }}</div>
+                  <sc-if value="{{ hasScanInvNo }}" hint-placeholder-val="{{ false }}"><div style="font-size:11px;color:var(--text-4);margin-top:3px;">發票號碼 {{ scanInvNo }}</div></sc-if>
+                </div>
+              </div>
+              <sc-if value="{{ hasScanError }}" hint-placeholder-val="{{ false }}">
+                <div style="background:rgba(233,180,76,0.1);border:1px solid rgba(233,180,76,0.28);border-radius:12px;padding:10px 12px;font-size:11px;color:#E9B44C;line-height:1.6;">{{ scanError }}</div>
+              </sc-if>
+              <div>
+                <div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">金額 (NT$)</div>
+                <input type="number" value="{{ scanAmount }}" onChange="{{ onScanAmount }}" placeholder="0" min="0" style="background:var(--input-bg);border:1px solid rgba(108,142,245,0.25);border-radius:12px;padding:12px 14px;color:var(--text-1);font-size:20px;font-weight:700;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" />
+              </div>
+              <div>
+                <div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">商家 / 備註</div>
+                <input type="text" value="{{ scanShop }}" onChange="{{ onScanShop }}" placeholder="例：全聯福利中心" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:13px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" />
+              </div>
+              <div style="display:flex;gap:10px;">
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">類別</div>
+                  <select value="{{ scanCategory }}" onChange="{{ onScanCategory }}" style="background:var(--app-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 12px;color:var(--text-1);font-size:13px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;-webkit-appearance:none;appearance:none;">
+                    <sc-for list="{{ scanCatOptions }}" as="c" hint-placeholder-count="3">
+                      <option value="{{ c.value }}">{{ c.label }}</option>
+                    </sc-for>
+                  </select>
+                </div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">帳戶 / 銀行</div>
+                  <select value="{{ scanBank }}" onChange="{{ onScanBank }}" style="background:var(--app-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 12px;color:var(--text-1);font-size:13px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;-webkit-appearance:none;appearance:none;">
+                    <sc-for list="{{ scanBankOptions }}" as="bk" hint-placeholder-count="3">
+                      <option value="{{ bk.value }}">{{ bk.label }}</option>
+                    </sc-for>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">日期</div>
+                <input type="date" value="{{ scanDate }}" onChange="{{ onScanDate }}" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:13px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;color-scheme:{{ colorScheme }};" />
+              </div>
+              <sc-if value="{{ hasScanItems }}" hint-placeholder-val="{{ false }}">
+                <div style="background:var(--card-bg2);border-radius:16px;padding:14px 16px;border:1px solid var(--border-1);">
+                  <div style="font-size:12px;font-weight:600;color:var(--text-3);margin-bottom:8px;">消費明細</div>
+                  <sc-for list="{{ scanItems }}" as="item" hint-placeholder-count="3">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-1);font-size:13px;color:var(--text-2);">{{ item.text }}</div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ hasScanText }}" hint-placeholder-val="{{ false }}">
+                <div>
+                  <div onClick="{{ toggleScanText }}" style="font-size:11px;color:#6C8EF5;font-weight:600;cursor:pointer;">{{ scanTextToggleLabel }}</div>
+                  <sc-if value="{{ showScanText }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:8px;background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:10px 12px;max-height:150px;overflow-y:auto;font-size:11px;color:var(--text-3);line-height:1.7;white-space:pre-wrap;word-break:break-all;">{{ scanText }}</div>
+                  </sc-if>
+                </div>
+              </sc-if>
+              <div style="display:flex;gap:10px;">
+                <div onClick="{{ rescanReceipt }}" style="flex:1;padding:14px;text-align:center;background:var(--border-1);border-radius:16px;font-size:14px;font-weight:600;color:var(--text-3);cursor:pointer;">重新掃描</div>
+                <div onClick="{{ confirmScan }}" style="flex:2;padding:14px;text-align:center;background:linear-gradient(135deg,#6C8EF5,#A78BFA);border-radius:16px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;">✓ 確認記錄</div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ═══ VOICE SHEET ═══ -->
+  <sc-if value="{{ showVoiceSheet }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;">
+      <div onClick="{{ closeVoiceSheet }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:var(--card-bg);border-radius:24px 24px 0 0;border-top:1px solid rgba(167,139,250,0.25);max-height:80%;display:flex;flex-direction:column;animation:sheetUp 0.38s cubic-bezier(0.16,1,0.3,1);">
+        <div style="padding:14px 20px 12px;border-bottom:1px solid var(--border-1);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
+          <div style="position:absolute;left:50%;transform:translateX(-50%);top:12px;"><div style="width:36px;height:4px;background:var(--border-4);border-radius:2px;"></div></div>
+          <div style="font-size:17px;font-weight:800;color:var(--text-1);margin-top:16px;">🎤 語音輸入</div>
+          <div onClick="{{ closeVoiceSheet }}" style="width:28px;height:28px;background:var(--border-1);border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-top:16px;"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 1l9 9M10 1L1 10" stroke="var(--text-3)" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        </div>
+        <div style="overflow-y:auto;padding:24px 20px 32px;">
+          <!-- READY -->
+          <sc-if value="{{ isVoiceReady }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:18px;">
+              <div onClick="{{ startVoice }}" style="width:100px;height:100px;background:linear-gradient(135deg,#A78BFA,#6C8EF5);border-radius:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 30px rgba(167,139,250,0.4);">
+                <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><rect x="16" y="4" width="12" height="22" rx="6" fill="#fff" opacity="0.95"/><path d="M8 22c0 7.7 6.3 14 14 14s14-6.3 14-14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><path d="M22 36v5" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+              </div>
+              <div style="font-size:16px;font-weight:700;color:var(--text-1);">點擊麥克風開始錄音</div>
+              <div style="font-size:12px;color:var(--text-3);text-align:center;line-height:1.7;">直接說出消費內容，例如：<br>「今天午餐吃了便當，花了 85 元」</div>
+            </div>
+          </sc-if>
+          <!-- RECORDING -->
+          <sc-if value="{{ isVoiceRecording }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:18px;">
+              <div style="display:flex;align-items:center;justify-content:center;gap:5px;height:60px;">
+                <div style="width:5px;background:#A78BFA;border-radius:3px;animation:waveA 0.8s ease infinite;"></div>
+                <div style="width:5px;background:#6C8EF5;border-radius:3px;animation:waveB 0.8s ease 0.1s infinite;"></div>
+                <div style="width:5px;background:#A78BFA;border-radius:3px;animation:waveC 0.8s ease 0.2s infinite;"></div>
+                <div style="width:5px;background:#6C8EF5;border-radius:3px;animation:waveB 0.8s ease 0.3s infinite;"></div>
+                <div style="width:5px;background:#A78BFA;border-radius:3px;animation:waveA 0.8s ease 0.15s infinite;"></div>
+                <div style="width:5px;background:#6C8EF5;border-radius:3px;animation:waveC 0.8s ease 0.25s infinite;"></div>
+                <div style="width:5px;background:#A78BFA;border-radius:3px;animation:waveB 0.8s ease 0.05s infinite;"></div>
+              </div>
+              <div style="font-size:28px;font-weight:800;color:var(--text-1);letter-spacing:2px;font-variant-numeric:tabular-nums;">{{ voiceTimer }}</div>
+              <div style="font-size:13px;color:#A78BFA;font-weight:600;">錄音中…</div>
+              <div onClick="{{ stopVoice }}" style="background:#F87171;border-radius:18px;padding:14px 36px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 6px 20px rgba(248,113,113,0.35);">■ 停止錄音</div>
+            </div>
+          </sc-if>
+          <!-- ANALYZING -->
+          <sc-if value="{{ isVoiceAnalyzing }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:20px 0;">
+              <div style="width:64px;height:64px;border:3px solid rgba(167,139,250,0.2);border-top-color:#A78BFA;border-radius:50%;animation:spin 1s linear infinite;"></div>
+              <div style="font-size:15px;font-weight:700;color:var(--text-1);">AI 分析語音中…</div>
+              <div style="font-size:12px;color:var(--text-3);">識別金額、類別與備註資訊</div>
+            </div>
+          </sc-if>
+          <!-- RESULT -->
+          <sc-if value="{{ isVoiceResult }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div style="background:rgba(167,139,250,0.08);border-radius:16px;padding:14px 16px;border:1px solid rgba(167,139,250,0.18);">
+                <div style="font-size:11px;color:var(--text-3);margin-bottom:6px;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="4" y="1" width="4" height="7" rx="2" stroke="#A78BFA" stroke-width="1.2"/><path d="M2 6.5C2 8.7 3.8 10.5 6 10.5s4-1.8 4-4" stroke="#A78BFA" stroke-width="1.2" stroke-linecap="round"/></svg>辨識內容</div>
+                <div style="font-size:14px;color:var(--text-1);line-height:1.6;font-style:italic;">「{{ voiceText }}」</div>
+              </div>
+              <div style="background:var(--card-bg2);border-radius:16px;padding:16px;border:1px solid var(--border-1);">
+                <div style="font-size:12px;font-weight:600;color:var(--text-3);margin-bottom:12px;">AI 解析結果</div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--text-3);">金額</span><span style="font-size:18px;font-weight:800;color:#F87171;">{{ voiceAmount }}</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--text-3);">類別</span><span style="font-size:13px;font-weight:600;color:#6C8EF5;">{{ voiceCategory }}</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;color:var(--text-3);">備註</span><span style="font-size:13px;color:var(--text-2);">{{ voiceNote }}</span></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <div onClick="{{ closeVoiceSheet }}" style="flex:1;padding:14px;text-align:center;background:var(--border-1);border-radius:16px;font-size:14px;font-weight:600;color:var(--text-3);cursor:pointer;">取消</div>
+                <div onClick="{{ confirmVoice }}" style="flex:2;padding:14px;text-align:center;background:linear-gradient(135deg,#A78BFA,#6C8EF5);border-radius:16px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;">✓ 確認記錄</div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ═══ ADD ASSET CATEGORY SHEET ═══ -->
+  <sc-if value="{{ showAddAssetCat }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;">
+      <div onClick="{{ closeAddAssetCat }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:var(--card-bg);border-radius:24px 24px 0 0;border-top:1px solid rgba(108,142,245,0.2);max-height:82%;display:flex;flex-direction:column;animation:sheetUp 0.38s cubic-bezier(0.16,1,0.3,1);">
+        <div style="padding:14px 20px 12px;border-bottom:1px solid var(--border-1);flex-shrink:0;">
+          <div style="display:flex;justify-content:center;margin-bottom:12px;"><div style="width:36px;height:4px;background:var(--border-4);border-radius:2px;"></div></div>
+          <div style="font-size:18px;font-weight:800;color:var(--text-1);">新增資產類別</div>
+        </div>
+        <div style="overflow-y:auto;padding:18px 20px 32px;display:flex;flex-direction:column;gap:16px;">
+          <!-- Emoji picker -->
+          <div>
+            <div style="font-size:11px;color:var(--text-4);margin-bottom:10px;font-weight:500;">選擇圖示</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <div style="width:52px;height:52px;background:rgba(108,142,245,0.1);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;border:1px solid rgba(108,142,245,0.2);">{{ newAssetEmoji }}</div>
+              <input type="text" value="{{ newAssetEmoji }}" onChange="{{ onNewAssetEmoji }}" placeholder="輸入 emoji" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:18px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" maxlength="2" />
+            </div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;">
+              <sc-for list="{{ emojiOptions }}" as="eo" hint-placeholder-count="12">
+                <div onClick="{{ eo.onPick }}" style="width:38px;height:38px;background:{{ eo.bg }};border:{{ eo.border }};border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;">{{ eo.emoji }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <!-- Name -->
+          <div>
+            <div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">類別名稱 *</div>
+            <input type="text" value="{{ newAssetName }}" onChange="{{ onNewAssetName }}" placeholder="例：加密貨幣、黃金、車輛…" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:14px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" />
+          </div>
+          <!-- Initial amount -->
+          <div>
+            <div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">初始金額 (NT$)（選填）</div>
+            <input type="number" value="{{ newAssetAmount }}" onChange="{{ onNewAssetAmount }}" placeholder="0" min="0" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:14px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" />
+          </div>
+          <div style="display:flex;gap:10px;padding-top:4px;">
+            <div onClick="{{ closeAddAssetCat }}" style="flex:1;padding:14px;text-align:center;background:var(--border-1);border-radius:16px;font-size:14px;font-weight:600;color:var(--text-3);cursor:pointer;">取消</div>
+            <div onClick="{{ submitAddAssetCat }}" style="flex:2;padding:14px;text-align:center;background:linear-gradient(135deg,#6C8EF5,#A78BFA);border-radius:16px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;">新增類別</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ═══ ASSET SHEET ═══ -->
+  <sc-if value="{{ showAssetSheet }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;">
+      <div onClick="{{ closeAssetSheet }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:var(--card-bg);border-radius:24px 24px 0 0;border-top:1px solid rgba(52,211,153,0.2);padding:16px 20px 40px;animation:sheetUp 0.35s cubic-bezier(0.16,1,0.3,1);">
+        <div style="display:flex;justify-content:center;margin-bottom:16px;"><div style="width:36px;height:4px;background:var(--border-4);border-radius:2px;"></div></div>
+        <div style="font-size:18px;font-weight:800;color:var(--text-1);margin-bottom:4px;">{{ editAssetType }}</div>
+        <div style="font-size:13px;color:var(--text-3);margin-bottom:22px;">輸入目前持有金額</div>
+        <div style="margin-bottom:22px;">
+          <div style="font-size:11px;color:var(--text-4);margin-bottom:8px;font-weight:500;">金額 (NT$)</div>
+          <input type="number" value="{{ editAssetAmount }}" onChange="{{ onAssetAmount }}" placeholder="0" min="0" style="background:var(--input-bg);border:1px solid rgba(52,211,153,0.25);border-radius:14px;padding:14px 18px;color:var(--text-1);font-size:22px;font-weight:700;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" />
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div onClick="{{ closeAssetSheet }}" style="flex:1;padding:14px;text-align:center;background:var(--border-1);border-radius:16px;font-size:14px;font-weight:600;color:var(--text-3);cursor:pointer;">取消</div>
+          <div onClick="{{ submitAsset }}" style="flex:2;padding:14px;text-align:center;background:linear-gradient(135deg,#34D399,#6C8EF5);border-radius:16px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;">儲存</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div><!-- /phone frame -->
+</div><!-- /outer -->
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CUSTOM_BANK = '__custom__';
+
+class Component extends DCLogic {
+  state = {
+    tab: 'home',
+    recordsTab: 'transactions',
+    analysisTab: 'trend',
+    insuranceTab: 'policies',
+    profileTab: 'main',
+    currentMonth: { year: 2026, month: 7 },
+    transactions: [],
+    budgets: { '餐飲': '', '交通': '', '娛樂': '', '購物': '', '醫療保健': '' },
+    assets: { '現金 & 存款': '', '股票 & ETF': '', '基金 & 債券': '', '不動產': '' },
+    assetHistory: [],
+    policies: [],
+    profile: { name: '', email: '', monthlyIncome: '' },
+    showAIPanel: false, aiMessages: [], aiTyping: false, fabOpen: false,
+    showTxSheet: false, txType: 'expense', txAmount: '', txCategory: '餐飲', txNote: '', txDate: '2026-07-08',
+    banks: ['現金', '台灣銀行', '中國信託', '國泰世華', '玉山銀行', '台新銀行', '富邦銀行', '第一銀行', '郵局', '信用卡'],
+    txBank: '現金', txBankCustom: '',
+    showBudgetSheet: false, budgetCategory: '餐飲', budgetAmount: '',
+    showPolicySheet: false, policyName: '', policyType: '壽險', policyCompany: '', policyPremium: '', policyFreq: '年繳', policyExpiry: '',
+    showAssetSheet: false, editAssetType: '現金 & 存款', editAssetAmount: '',
+    customAssetDefs: [],
+    showAddAssetCat: false, newAssetName: '', newAssetEmoji: '💼', newAssetAmount: '',
+    toast: '',
+    darkMode: false,
+    showScanSheet: false, scanStep: 'ready', scanImage: '', scanText: '', showScanText: false,
+    scanAmount: '', scanShop: '', scanCategory: '餐飲', scanDate: '', scanBank: '現金',
+    scanInvNo: '', scanItems: [], scanSource: '', scanProgress: 0, scanStatus: '', scanError: '',
+    showVoiceSheet: false, voiceStep: 'ready', voiceData: null, voiceSeconds: 0,
+  };
+  charts = {};
+  STORAGE_KEY = 'financeapp_v1';
+  timers = {};
+  aiRun = 0;
+
+  // 重開記帳表單時沿用上次選的帳戶；若上次停在「自訂」就退回第一個帳戶，
+  // 否則一打開就看到空的自訂輸入框。
+  defaultBank(prev) {
+    const list = Array.isArray(prev.banks) && prev.banks.length ? prev.banks : ['現金'];
+    return prev.txBank === CUSTOM_BANK || !prev.txBank ? list[0] : prev.txBank;
+  }
+
+  resetBank(prev) {
+    return { txBank: this.defaultBank(prev), txBankCustom: '' };
+  }
+
+  // 以「本地時區」解析 YYYY-MM-DD。new Date('2026-08-01') 會被當成 UTC 午夜，
+  // 在 UTC 負時區會退回前一天，導致交易被算進錯誤的月份。
+  parseDate(str) {
+    const m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(str || ''));
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(NaN);
+  }
+  todayStr() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  }
+  monthOf(dateStr) {
+    const d = this.parseDate(dateStr);
+    return isNaN(d.getTime()) ? null : { year: d.getFullYear(), month: d.getMonth() + 1 };
+  }
+  inMonth(dateStr, year, month) {
+    const d = this.parseDate(dateStr);
+    return !isNaN(d.getTime()) && d.getFullYear() === year && d.getMonth() + 1 === month;
+  }
+
+  applyTheme(dark) {
+    const d = { '--outer-bg':'#03050D','--app-bg':'#080C18','--card-bg':'#0D1526','--card-bg2':'#111E3A','--text-1':'#E8EDF8','--text-2':'#C8D4F0','--text-3b':'#8899BB','--text-3':'#526080','--text-4':'#7B90BB','--text-5':'#344060','--text-6':'#3A4E72','--border-1':'rgba(255,255,255,0.05)','--input-bg':'rgba(255,255,255,0.04)','--border-2':'rgba(255,255,255,0.08)','--border-3':'rgba(255,255,255,0.06)','--border-4':'rgba(255,255,255,0.12)' };
+    const l = { '--outer-bg':'#E4ECF8','--app-bg':'#F0F5FE','--card-bg':'#FFFFFF','--card-bg2':'#EAF0FD','--text-1':'#0D1B2E','--text-2':'#1D3154','--text-3b':'#3A5278','--text-3':'#526898','--text-4':'#7090B0','--text-5':'#96B0CC','--text-6':'#B0C4DC','--border-1':'rgba(70,100,160,0.07)','--input-bg':'rgba(70,100,160,0.04)','--border-2':'rgba(70,100,160,0.10)','--border-3':'rgba(70,100,160,0.07)','--border-4':'rgba(70,100,160,0.10)' };
+    const theme = dark ? d : l;
+    Object.entries(theme).forEach(([k,v]) => document.documentElement.style.setProperty(k, v));
+  }
+
+  componentDidMount() {
+    const now = new Date();
+    // 預設月份／日期要跟著今天走，不能寫死
+    const patch = {
+      currentMonth: { year: now.getFullYear(), month: now.getMonth() + 1 },
+      txDate: this.todayStr(),
+    };
+    let dark = this.state.darkMode;
+    try {
+      const raw = localStorage.getItem(this.STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        const keys = ['transactions','budgets','assets','assetHistory','policies','profile','customAssetDefs','banks','txBank','darkMode'];
+        keys.forEach(k => { if (saved[k] !== undefined) patch[k] = saved[k]; });
+        if (typeof saved.darkMode === 'boolean') dark = saved.darkMode;
+      }
+    } catch(e) {}
+    this.setState(patch);
+    // 只套一次主題：先前寫成「先套 saved 再套 this.state」，第二次會用尚未更新的
+    // 舊 state 把剛套好的深色主題蓋回淺色。
+    this.applyTheme(dark);
+    this.prevState = this.state;
+  }
+
+  componentWillUnmount() {
+    this.aiRun++;
+    this.destroyCharts();
+    Object.keys(this.timers).forEach(k => { clearTimeout(this.timers[k]); clearInterval(this.timers[k]); });
+    this.timers = {};
+  }
+
+  save(state) {
+    try {
+      const { transactions, budgets, assets, assetHistory, policies, profile, customAssetDefs, banks, txBank, darkMode } = state;
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify({ transactions, budgets, assets, assetHistory, policies, profile, customAssetDefs, banks, txBank, darkMode }));
+    } catch(e) {}
+  }
+
+  // ═══ 發票掃描 ═══
+  // 拍照 → 先找電子發票 QR Code（金額、日期、發票號碼都是明碼，最準確），
+  // 找不到才退回 OCR 文字辨識。兩個函式庫都等到真的要用時才下載。
+  QR_LIB = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+  OCR_LIB = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+  // 第一次 OCR 會下載語言模型（chi_tra 約 2.4MB、eng 約 4MB，之後瀏覽器會快取）。
+  // 只記中文發票的話可以把 'eng' 拿掉，下載量大約少一半。
+  OCR_LANGS = ['chi_tra', 'eng'];
+
+  loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const found = document.querySelector('script[data-lib="' + src + '"]');
+      if (found) {
+        if (found.dataset.ready === '1') return resolve();
+        found.addEventListener('load', () => resolve());
+        found.addEventListener('error', () => reject(new Error('函式庫載入失敗')));
+        return;
+      }
+      const el = document.createElement('script');
+      el.src = src;
+      el.dataset.lib = src;
+      el.onload = () => { el.dataset.ready = '1'; resolve(); };
+      el.onerror = () => reject(new Error('函式庫載入失敗，請確認網路連線'));
+      document.head.appendChild(el);
+    });
+  }
+
+  onScanFile(e) {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = ''; // 清掉才能重選同一張照片
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onerror = () => this.scanFailed('讀不到這個檔案，請換一張照片');
+    reader.onload = () => this.processReceipt(String(reader.result));
+    reader.readAsDataURL(file);
+  }
+
+  // 手機照片動輒 4000px 寬，先縮到長邊 1600px：QR 與 OCR 都夠用又快很多
+  loadCanvas(dataUrl) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('影像解碼失敗'));
+      img.onload = () => {
+        const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+        const cv = document.createElement('canvas');
+        cv.width = Math.max(1, Math.round(img.width * scale));
+        cv.height = Math.max(1, Math.round(img.height * scale));
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        resolve(cv);
+      };
+      img.src = dataUrl;
+    });
+  }
+
+  async processReceipt(dataUrl) {
+    // 連續選兩張照片時，舊的辨識結果不能蓋掉新的
+    this.scanRun = (this.scanRun || 0) + 1;
+    const run = this.scanRun;
+    const alive = () => run === this.scanRun && this.state.showScanSheet;
+    this.setState({ scanStep: 'scanning', scanImage: dataUrl, scanProgress: 8, scanStatus: '讀取影像…', scanError: '', scanText: '', scanItems: [], scanInvNo: '' });
+
+    let canvas;
+    try {
+      canvas = await this.loadCanvas(dataUrl);
+    } catch (err) {
+      if (alive()) this.scanFailed('照片無法解碼，請改用 JPG / PNG 照片');
+      return;
+    }
+    if (!alive()) return;
+
+    // 1) 電子發票 QR Code
+    this.setState({ scanProgress: 22, scanStatus: '尋找發票 QR Code…' });
+    try {
+      const invoice = await this.readInvoiceQR(canvas);
+      if (!alive()) return;
+      if (invoice) { this.scanDone(invoice, 'qr'); return; }
+    } catch (err) { /* 沒有 QR 或函式庫載不到，往下走 OCR */ }
+    if (!alive()) return;
+
+    // 2) OCR 文字辨識
+    this.setState({ scanProgress: 35, scanStatus: '下載辨識模型…' });
+    try {
+      const text = await this.readReceiptText(canvas, (pct, label) => {
+        if (alive()) this.setState({ scanProgress: 35 + Math.round(pct * 60), scanStatus: label });
+      });
+      if (!alive()) return;
+      this.scanDone({ ...this.parseReceiptText(text), text }, 'ocr');
+    } catch (err) {
+      if (alive()) this.scanFailed('自動辨識失敗（' + ((err && err.message) || '未知錯誤') + '），請手動輸入金額');
+    }
+  }
+
+  async readInvoiceQR(canvas) {
+    await this.loadScript(this.QR_LIB);
+    if (!window.jsQR) return null;
+    const ctx = canvas.getContext('2d');
+    // 整張找一次，再單獨掃下半部——發票 QR 幾乎都印在下方，放大比例後比較好認
+    const regions = [
+      [0, 0, canvas.width, canvas.height],
+      [0, Math.round(canvas.height * 0.4), canvas.width, canvas.height - Math.round(canvas.height * 0.4)],
+    ];
+    for (const [x, y, w, h] of regions) {
+      if (w < 40 || h < 40) continue;
+      const img = ctx.getImageData(x, y, w, h);
+      const code = window.jsQR(img.data, w, h, { inversionAttempts: 'attemptBoth' });
+      const invoice = code && this.parseInvoiceQR(code.data);
+      if (invoice) return invoice;
+    }
+    return null;
+  }
+
+  // 台灣電子發票左側 QR 的前 77 碼是固定格式：
+  // 發票號碼10 + 開立日期(民國)7 + 隨機碼4 + 銷售額8(16進位) + 總計額8(16進位)
+  //   + 買方統編8 + 賣方統編8 + 加密驗證24
+  parseInvoiceQR(raw) {
+    const s = String(raw || '').trim();
+    if (s.length < 37 || !/^[A-Z]{2}\d{8}/.test(s)) return null; // 右側 QR 以 ** 開頭，會被擋掉
+    const total = parseInt(s.slice(29, 37), 16);
+    if (!isFinite(total) || total <= 0) return null;
+    const m = /^(\d{3})(\d{2})(\d{2})$/.exec(s.slice(10, 17));
+    const items = this.parseInvoiceItems(s);
+    return {
+      amount: total,
+      date: m ? this.safeDate(+m[1] + 1911, +m[2], +m[3]) : '',
+      invNo: s.slice(0, 10),
+      items,
+      shop: '',
+      // 左側 QR 只有賣方統編沒有店名，改用品名猜類別
+      category: this.guessCategory(items.map(i => i.text).join(' ')),
+      text: s,
+    };
+  }
+
+  // 77 碼之後以「:」分隔：自定資料、本 QR 品目筆數、發票總筆數、中文編碼參數(1=Base64)、
+  // 之後每三欄一組品名/數量/單價
+  parseInvoiceItems(s) {
+    const rest = s.slice(77);
+    const parts = (rest.startsWith(':') ? rest.slice(1) : rest).split(':');
+    if (parts.length < 7) return [];
+    const isBase64 = parts[3] === '1';
+    const rows = parts.slice(4);
+    const items = [];
+    for (let i = 0; i + 2 < rows.length && items.length < 12; i += 3) {
+      let name = rows[i];
+      if (isBase64) {
+        try {
+          const bin = atob(name);
+          name = new TextDecoder('utf-8').decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+        } catch (e) { continue; } // Big5 或壞掉的編碼就跳過，不要塞亂碼進畫面
+      }
+      const price = parseFloat(rows[i + 2]);
+      if (!name) continue;
+      items.push({ text: isFinite(price) ? `${name} × ${rows[i + 1]}　$${Math.round(price)}` : name });
+    }
+    return items;
+  }
+
+  async readReceiptText(canvas, onProgress) {
+    await this.loadScript(this.OCR_LIB);
+    if (!window.Tesseract) throw new Error('OCR 函式庫載入失敗');
+    let worker = null;
+    const job = (async () => {
+      worker = await window.Tesseract.createWorker(this.OCR_LANGS, 1, {
+        // 用 tessdata_fast：標準版中文模型超過 20MB，手機上光是下載就要等很久。
+        // 放在 jsdelivr 上（跟 OCR 函式庫同一個 CDN），比預設的來源穩定。
+        langPath: 'https://cdn.jsdelivr.net/gh/tesseract-ocr/tessdata_fast@4.1.0',
+        gzip: false,
+        logger: m => {
+          const pct = m.progress || 0;
+          if (m.status === 'recognizing text') onProgress(pct, `文字辨識中… ${Math.round(pct * 100)}%`);
+          else if (String(m.status || '').includes('traineddata')) onProgress(0, '下載辨識模型…');
+          else if (m.status) onProgress(0, '啟動辨識引擎…');
+        },
+      });
+      const { data } = await worker.recognize(canvas);
+      return (data && data.text) || '';
+    })();
+
+    // 下載模型或辨識卡住時要有出口，不能讓使用者對著進度條乾等
+    let timer;
+    const guard = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('辨識時間過長')), 180000); });
+    try {
+      return await Promise.race([job, guard]);
+    } finally {
+      clearTimeout(timer);
+      // 逾時後工作仍在背景跑，等它自己結束再收掉 worker（順便吃掉未處理的 rejection）
+      job.then(() => worker && worker.terminate(), () => worker && worker.terminate());
+    }
+  }
+
+  // 從 OCR 文字裡挑金額：先看「總計／應收／TOTAL」那幾行，再退而求其次找最大的合理數字
+  parseReceiptText(text) {
+    const lines = String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const numbersIn = line => (line.match(/\d[\d,]*(?:\.\d{1,2})?/g) || [])
+      .map(n => parseFloat(n.replace(/,/g, '')))
+      .filter(n => isFinite(n) && n > 0 && n < 1000000);
+    const pick = re => {
+      let best = 0;
+      for (const line of lines) {
+        if (!re.test(line)) continue;
+        const nums = numbersIn(line);
+        if (nums.length) best = Math.max(best, nums[nums.length - 1]);
+      }
+      return best;
+    };
+    let amount = pick(/(總計|總金額|合計|應收|實收|應付|TOTAL|AMOUNT)/i)
+      || pick(/(小計|金額|現金|CASH|SUBTOTAL)/i);
+    if (!amount) {
+      // 保底：取最大的數字，但要先排掉日期、時間、統編、電話那幾行，否則年份會被當成金額
+      const meta = /(\d{4}[-\/.年]\d{1,2}[-\/.月]|\d{1,2}:\d{2}|統一編號|統編|發票|號碼|電話|TEL|NO\.|INVOICE|DATE|TIME)/i;
+      const all = lines.filter(l => !meta.test(l)).reduce((acc, l) => acc.concat(numbersIn(l)), []);
+      if (all.length) amount = Math.max.apply(null, all);
+    }
+
+    let date = '';
+    const ad = /(\d{4})[-\/.年](\d{1,2})[-\/.月](\d{1,2})/.exec(text);
+    if (ad) date = this.safeDate(+ad[1], +ad[2], +ad[3]);
+    if (!date) {
+      const roc = /(\d{3})[-\/.年](\d{1,2})[-\/.月](\d{1,2})/.exec(text);
+      if (roc) date = this.safeDate(+roc[1] + 1911, +roc[2], +roc[3]);
+    }
+
+    // 商家：抬頭幾行裡第一行不像欄位標題的文字
+    const noise = /(發票|統一編號|統編|收銀|日期|時間|電話|地址|號碼|明細|隨機碼|TEL|NO\.|INVOICE|DATE)/i;
+    const shop = lines.slice(0, 6).find(l => l.length >= 2 && l.length <= 20 && !noise.test(l) && /[\u4e00-\u9fffA-Za-z]/.test(l)) || '';
+
+    return { amount: Math.round(amount) || 0, date, shop, items: [], category: this.guessCategory(shop + ' ' + text) };
+  }
+
+  safeDate(y, m, d) {
+    if (!(y >= 2000 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31)) return '';
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+
+  guessCategory(text) {
+    const t = String(text || '');
+    const rules = [
+      ['餐飲', /(餐|食|飲|咖啡|茶|麵|飯|便當|小吃|早餐|烘焙|麥當勞|starbucks|coffee|burger|pizza)/i],
+      ['交通', /(加油|中油|台塑|油站|捷運|台鐵|高鐵|停車|計程車|客運|悠遊卡|一卡通|uber)/i],
+      ['醫療保健', /(藥|診所|醫院|健保|藥妝|clinic|pharmacy)/i],
+      ['娛樂', /(電影|影城|KTV|遊戲|書店|唱片|樂園|netflix|spotify)/i],
+      ['購物', /(超商|超市|全家|全聯|統一超商|萊爾富|家樂福|大潤發|百貨|購物|商店|市場|mart|store|shop|7-ELEVEN)/i],
+    ];
+    for (const [cat, re] of rules) if (re.test(t)) return cat;
+    return '其他';
+  }
+
+  scanDone(data, source) {
+    this.setState(s => ({
+      scanStep: 'result', scanSource: source, scanProgress: 100, scanStatus: '',
+      scanAmount: data.amount ? String(data.amount) : '',
+      scanShop: data.shop || '',
+      scanCategory: data.category || this.guessCategory(data.shop || ''),
+      scanDate: data.date || this.todayStr(),
+      scanInvNo: data.invNo || '',
+      scanItems: data.items || [],
+      scanText: data.text || '',
+      scanBank: this.defaultBank(s),
+      scanError: data.amount ? '' : '沒有讀到金額，請自行輸入',
+    }));
+  }
+
+  scanFailed(msg) {
+    this.setState(s => ({
+      scanStep: 'result', scanSource: 'manual', scanProgress: 0, scanStatus: '',
+      scanAmount: '', scanShop: '', scanCategory: '餐飲', scanDate: this.todayStr(),
+      scanInvNo: '', scanItems: [], scanText: '', scanError: msg, scanBank: this.defaultBank(s),
+    }));
+  }
+
+  resetScan(prev) {
+    return {
+      scanStep: 'ready', scanImage: '', scanText: '', showScanText: false, scanAmount: '',
+      scanShop: '', scanCategory: '餐飲', scanDate: '', scanInvNo: '', scanItems: [],
+      scanSource: '', scanProgress: 0, scanStatus: '', scanError: '', scanBank: this.defaultBank(prev),
+    };
+  }
+
+  // 加入一筆交易，並把目前檢視的月份跳到該筆交易所屬月份，
+  // 否則記完帳卻因為月份不同而在清單上看不到。
+  addTx(tx, extraPatch) {
+    const cm = this.monthOf(tx.date);
+    this.setState(s => Object.assign({
+      transactions: [...s.transactions, tx],
+      currentMonth: cm || s.currentMonth,
+    }, extraPatch));
+  }
+
+  confirmScan() {
+    const { scanAmount, scanCategory, scanShop, scanDate, scanBank, scanInvNo } = this.state;
+    const amount = parseFloat(scanAmount);
+    if (!isFinite(amount) || amount <= 0) { this.showToast('⚠️ 請確認金額後再記錄'); return; }
+    const note = [String(scanShop).trim(), scanInvNo ? `發票 ${scanInvNo}` : ''].filter(Boolean).join(' · ');
+    const date = this.monthOf(scanDate) ? scanDate : this.todayStr();
+    const tx = { id: Date.now(), type: 'expense', amount, category: scanCategory, note, date, bank: scanBank };
+    this.scanRun = (this.scanRun || 0) + 1;
+    this.addTx(tx, Object.assign({ showScanSheet: false, txBank: scanBank }, this.resetScan(this.state)));
+    this.showToast('✓ 發票已記錄');
+  }
+
+  startVoice() {
+    clearInterval(this.timers.voiceTick); // 連點兩次不會變成雙倍計時
+    this.setState({ voiceStep: 'recording', voiceSeconds: 0 });
+    this.timers.voiceTick = setInterval(() => this.setState(s => ({ voiceSeconds: s.voiceSeconds + 1 })), 1000);
+  }
+
+  stopVoice() {
+    clearInterval(this.timers.voiceTick);
+    clearTimeout(this.timers.voice);
+    this.setState({ voiceStep: 'analyzing' });
+    const mocks = [
+      { text: '今天午餐吃了便當，花了八十五元', amount: 85, category: '餐飲', note: '便當午餐' },
+      { text: '搭計程車回家，花了兩百三十元', amount: 230, category: '交通', note: '計程車' },
+      { text: '在全家買咖啡和三明治，共一百一十五元', amount: 115, category: '餐飲', note: '全家早餐' },
+      { text: '繳電信費一千二百元', amount: 1200, category: '其他', note: '電信費' },
+    ];
+    this.timers.voice = setTimeout(() => {
+      this.timers.voice = null;
+      if (!this.state.showVoiceSheet) return;
+      this.setState({ voiceStep: 'result', voiceData: mocks[Math.floor(Math.random() * mocks.length)] });
+    }, 1800);
+  }
+
+  confirmVoice() {
+    const { voiceData } = this.state;
+    if (!voiceData) return;
+    const tx = { id: Date.now(), type: 'expense', amount: voiceData.amount, category: voiceData.category, note: voiceData.note, date: this.todayStr() };
+    this.addTx(tx, { showVoiceSheet: false, voiceStep: 'ready', voiceData: null, voiceSeconds: 0 });
+    this.showToast('✓ 語音記帳完成');
+  }
+
+  showToast(msg) {
+    this.setState({ toast: msg });
+    clearTimeout(this.timers.toast);
+    this.timers.toast = setTimeout(() => this.setState({ toast: '' }), 2200);
+  }
+
+  submitAddAssetCat() {
+    const { newAssetName, newAssetEmoji, newAssetAmount, assets, customAssetDefs } = this.state;
+    const key = newAssetName.trim();
+    if (!key) { this.showToast('⚠️ 請輸入類別名稱'); return; }
+    if (assets[key] !== undefined) { this.showToast('⚠️ 已有相同名稱的資產類別'); return; }
+    const amt = newAssetAmount === '' ? '' : parseFloat(newAssetAmount);
+    if (amt !== '' && (!isFinite(amt) || amt < 0)) { this.showToast('⚠️ 請輸入有效金額'); return; }
+    const newDef = { id: Date.now(), key, emoji: newAssetEmoji || '💼' };
+    this.setState(prev => ({
+      customAssetDefs: [...prev.customAssetDefs, newDef],
+      assets: { ...prev.assets, [key]: amt === '' ? '' : String(amt) },
+      showAddAssetCat: false, newAssetName: '', newAssetEmoji: '💼', newAssetAmount: '',
+    }));
+    this.showToast(`✓ 已新增「${key}」類別`);
+  }
+
+  // dc-runtime 呼叫的是 componentDidUpdate(prevProps)——只有一個參數。
+  // 原本簽章寫成 (prev, prevState) 並在第一行就讀 prevState.darkMode，
+  // 每次更新都會丟 TypeError 並被 runtime 的 try/catch 吞掉，
+  // 導致自動存檔、圖表初始化、深色模式套用三件事全部沒有執行。
+  // 這裡改成自己保存上一輪的 state 快照。
+  componentDidUpdate() {
+    const prevState = this.prevState || {};
+    const s = this.state;
+    this.prevState = s;
+
+    if (prevState.darkMode !== s.darkMode) this.applyTheme(s.darkMode);
+
+    // Auto-save when data changes
+    if (prevState.transactions !== s.transactions || prevState.budgets !== s.budgets ||
+        prevState.assets !== s.assets || prevState.assetHistory !== s.assetHistory ||
+        prevState.policies !== s.policies || prevState.profile !== s.profile ||
+        prevState.customAssetDefs !== s.customAssetDefs || prevState.banks !== s.banks ||
+        prevState.txBank !== s.txBank || prevState.darkMode !== s.darkMode) {
+      this.save(s);
+    }
+
+    // Charts
+    if (s.tab === 'analysis') {
+      const changed = prevState.tab !== 'analysis' || prevState.analysisTab !== s.analysisTab
+        || prevState.transactions !== s.transactions || prevState.assets !== s.assets
+        || prevState.policies !== s.policies || prevState.currentMonth !== s.currentMonth
+        || prevState.darkMode !== s.darkMode;
+      if (changed) this.initChart();
+    } else if (prevState.tab === 'analysis') {
+      this.destroyCharts();
+    }
+  }
+
+  destroyCharts() {
+    clearTimeout(this.timers.chart);
+    this.timers.chart = null;
+    Object.values(this.charts).forEach(c => { try { c.destroy(); } catch (e) {} });
+    this.charts = {};
+  }
+
+  initChart() {
+    this.destroyCharts();
+    const { analysisTab, currentMonth, transactions, assets, policies } = this.state;
+    const colors = ['#6C8EF5', '#34D399', '#E9B44C', '#F87171', '#A78BFA'];
+    // 圖表文字／格線顏色要跟著主題走，原本寫死深色值在淺色模式下幾乎看不見
+    const dark = this.state.darkMode;
+    const legendColor = dark ? '#7B90BB' : '#526898';
+    const tickColor = dark ? '#526080' : '#7090B0';
+    const gridColor = dark ? 'rgba(255,255,255,0.05)' : 'rgba(70,100,160,0.12)';
+    const baseOpts = {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: legendColor, font: { family: 'Plus Jakarta Sans', size: 11 }, boxWidth: 10, padding: 12 } } }
+    };
+    const scaleOpts = {
+      x: { ticks: { color: tickColor, font: { family: 'Plus Jakarta Sans', size: 10 } }, grid: { color: gridColor }, border: { color: gridColor } },
+      y: { ticks: { color: tickColor, font: { family: 'Plus Jakarta Sans', size: 10 } }, grid: { color: gridColor }, border: { color: gridColor } }
+    };
+    // Last 6 months
+    const months6 = [];
+    for (let i = 5; i >= 0; i--) {
+      let m = currentMonth.month - i, y = currentMonth.year;
+      while (m <= 0) { m += 12; y -= 1; }
+      const inc = transactions.filter(t => t.type === 'income' && this.inMonth(t.date, y, m)).reduce((s, t) => s + t.amount, 0);
+      const exp = transactions.filter(t => t.type === 'expense' && this.inMonth(t.date, y, m)).reduce((s, t) => s + t.amount, 0);
+      months6.push({ label: `${m}月`, inc, exp });
+    }
+    // 延遲建立圖表是為了等 canvas 進 DOM，但延遲期間可能又切了分頁：
+    // 沒有 guard 的話兩個 timeout 會對同一個 canvas 建兩次圖，
+    // Chart.js 會丟 "Canvas is already in use"。
+    this.timers.chart = setTimeout(() => {
+      this.timers.chart = null;
+      if (typeof Chart === 'undefined') return;
+      if (this.state.tab !== 'analysis' || this.state.analysisTab !== analysisTab) return;
+      if (analysisTab === 'trend') {
+        const el = document.getElementById('chart-trend'); if (!el) return;
+        this.charts.trend = new Chart(el, { type: 'line', data: { labels: months6.map(m => m.label), datasets: [
+          { label: '收入', data: months6.map(m => m.inc), borderColor: '#34D399', backgroundColor: 'rgba(52,211,153,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#34D399', pointRadius: 4 },
+          { label: '支出', data: months6.map(m => m.exp), borderColor: '#F87171', backgroundColor: 'rgba(248,113,113,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#F87171', pointRadius: 4 }
+        ] }, options: { ...baseOpts, scales: scaleOpts } });
+      } else if (analysisTab === 'category') {
+        const el = document.getElementById('chart-category'); if (!el) return;
+        const cats = ['餐飲','交通','娛樂','購物','醫療保健','其他'];
+        const cm = currentMonth;
+        const data = cats.map(cat => transactions.filter(t => t.type === 'expense' && t.category === cat && this.inMonth(t.date, cm.year, cm.month)).reduce((s,t)=>s+t.amount,0));
+        const total = data.reduce((s,v)=>s+v,0);
+        this.charts.category = new Chart(el, { type: 'doughnut', data: { labels: cats, datasets: [{ data: total > 0 ? data : [1,1,1,1,1,1], backgroundColor: colors.concat('#5BA4F5'), borderWidth: 0, hoverOffset: 6 }] }, options: { ...baseOpts, cutout: '62%' } });
+      } else if (analysisTab === 'assets') {
+        const el = document.getElementById('chart-assets'); if (!el) return;
+        const keys = ['現金 & 存款','股票 & ETF','基金 & 債券','不動產'];
+        const data = keys.map(k => parseFloat(assets[k]) || 0);
+        const total = data.reduce((s,v)=>s+v,0);
+        this.charts.assets = new Chart(el, { type: 'doughnut', data: { labels: keys, datasets: [{ data: total > 0 ? data : [1,1,1,1], backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] }, options: { ...baseOpts, cutout: '62%' } });
+      } else if (analysisTab === 'cashflow') {
+        const el = document.getElementById('chart-cashflow'); if (!el) return;
+        this.charts.cashflow = new Chart(el, { type: 'bar', data: { labels: months6.map(m => m.label), datasets: [
+          { label: '流入', data: months6.map(m => m.inc), backgroundColor: 'rgba(52,211,153,0.65)', borderRadius: 5 },
+          { label: '流出', data: months6.map(m => m.exp), backgroundColor: 'rgba(248,113,113,0.65)', borderRadius: 5 }
+        ] }, options: { ...baseOpts, scales: scaleOpts } });
+      } else if (analysisTab === 'premium') {
+        const el = document.getElementById('chart-premium'); if (!el) return;
+        const types = ['壽險','醫療險','意外險','重大傷病險','其他'];
+        const data = types.map(t => policies.filter(p=>p.type===t).reduce((s,p)=>{ const pr=parseFloat(p.premium)||0; return s+(p.freq==='月繳'?pr*12:p.freq==='半年繳'?pr*2:pr); },0));
+        const total = data.reduce((s,v)=>s+v,0);
+        this.charts.premium = new Chart(el, { type: 'doughnut', data: { labels: types, datasets: [{ data: total > 0 ? data : [1,1,1,1,1], backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] }, options: { ...baseOpts, cutout: '62%' } });
+      }
+    }, 220);
+  }
+
+  triggerAI() {
+    const { transactions, policies, profile } = this.state;
+    const allInc = transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const allExp = transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const monthlyInc = parseFloat(profile.monthlyIncome) || 0;
+    const msgs = [
+      { isSys: true, isAI: false, text: '正在分析您的財務狀況…' },
+    ];
+    if (transactions.length === 0 && policies.length === 0) {
+      msgs.push({ isSys: false, isAI: true, text: '📊 目前尚無財務記錄。建議先：\n\n① 記錄收入來源（薪資、投資收益等）\n② 建立預算分類控制支出\n③ 整理現有保單確保基本保障' });
+    } else {
+      const savings = allInc - allExp;
+      // 沒有收入卻有支出時，原本算出 0% 會被歸類成「儲蓄率偏低」，實際上是入不敷出
+      const savingRate = allInc > 0 ? Math.round((savings / allInc) * 100) : (allExp > 0 ? -100 : 0);
+      const rateText = allInc > 0 ? `${savingRate}%` : '—（尚無收入記錄）';
+      msgs.push({ isSys: false, isAI: true, text: `📊 財務摘要：累計收入 NT$${Math.round(allInc).toLocaleString()}，支出 NT$${Math.round(allExp).toLocaleString()}，儲蓄率 ${rateText}。` });
+      if (savingRate >= 20) {
+        msgs.push({ isSys: false, isAI: true, text: '✅ 您的儲蓄率表現良好！建議將閒置資金投入指數型 ETF，長期複利增值。' });
+      } else if (savingRate >= 0) {
+        msgs.push({ isSys: false, isAI: true, text: '⚠️ 儲蓄率偏低，建議設定各類別預算目標，從減少娛樂和餐飲支出開始改善。' });
+      } else {
+        msgs.push({ isSys: false, isAI: true, text: '🚨 目前支出超過收入，建議立即審視非必要支出，優先建立 3-6 個月緊急備用金。' });
+      }
+      if (policies.length === 0) {
+        msgs.push({ isSys: false, isAI: true, text: '🛡️ 尚未建立任何保障！建議優先投保定期壽險（保額建議年薪 10 倍）和醫療實支實付險。' });
+      } else if (monthlyInc > 0) {
+        const annualPrem = policies.reduce((s,p)=>{ const pr=parseFloat(p.premium)||0; return s+(p.freq==='月繳'?pr*12:p.freq==='半年繳'?pr*2:pr); },0);
+        const premRatio = Math.round((annualPrem / (monthlyInc * 12)) * 100);
+        msgs.push({ isSys: false, isAI: true, text: `🛡️ 您有 ${policies.length} 張保單，年繳保費占年收入 ${premRatio}%。${premRatio > 15 ? '建議檢視是否有重複保障，適度精簡。' : '保費配置合理，持續維護保障完整性。'}` });
+      }
+    }
+    // 每次分析給一個流水號：關掉面板或重新分析時舊的序列會自動停止，
+    // 否則關閉後殘留的 setTimeout 會把舊訊息塞進下一次的對話。
+    const run = ++this.aiRun;
+    clearTimeout(this.timers.ai);
+    this.setState({ showAIPanel: true, aiTyping: true, aiMessages: [] });
+    let i = 0;
+    const show = () => {
+      if (run !== this.aiRun) return;
+      if (i < msgs.length) {
+        const msg = msgs[i++];
+        this.setState(s => ({ aiMessages: [...s.aiMessages, msg] }));
+        this.timers.ai = setTimeout(show, i === 1 ? 900 : 1600);
+      } else {
+        this.setState({ aiTyping: false });
+      }
+    };
+    this.timers.ai = setTimeout(show, 400);
+  }
+
+  submitTx() {
+    const { txType, txAmount, txCategory, txNote, txDate, txBank, txBankCustom, banks } = this.state;
+    const amount = parseFloat(txAmount);
+    // 原本靜默 return，使用者按了沒反應也不知道為什麼
+    if (!isFinite(amount) || amount <= 0) { this.showToast('⚠️ 請輸入大於 0 的金額'); return; }
+    // 選了「自訂」卻沒填名稱的話，這筆帳會沒有歸屬帳戶，先擋下來
+    const isCustomBank = txBank === CUSTOM_BANK;
+    const bank = isCustomBank ? String(txBankCustom).trim() : txBank;
+    if (isCustomBank && !bank) { this.showToast('⚠️ 請輸入銀行 / 帳戶名稱'); return; }
+    const date = this.monthOf(txDate) ? txDate : this.todayStr();
+    const tx = { id: Date.now(), type: txType, amount, category: txCategory, note: txNote.trim(), date, bank };
+    // 新的自訂帳戶存進清單，下次可直接從下拉選單挑
+    const nextBanks = banks.includes(bank) ? banks : [...banks, bank];
+    this.addTx(tx, { showTxSheet: false, txAmount: '', txNote: '', fabOpen: false, banks: nextBanks, txBank: bank, txBankCustom: '' });
+    this.showToast(tx.type === 'income' ? '✓ 收入已記錄' : '✓ 支出已記錄');
+  }
+
+  submitBudget() {
+    const { budgetCategory, budgetAmount } = this.state;
+    const amt = String(budgetAmount).trim() === '' ? '' : parseFloat(budgetAmount);
+    if (amt !== '' && (!isFinite(amt) || amt < 0)) { this.showToast('⚠️ 請輸入有效的預算金額'); return; }
+    const value = amt === '' ? '' : String(amt);
+    this.setState(s => ({ budgets: { ...s.budgets, [budgetCategory]: value }, showBudgetSheet: false, budgetAmount: '' }));
+    this.showToast(value === '' ? `✓ 已清除${budgetCategory}預算` : `✓ ${budgetCategory}預算已儲存`);
+  }
+
+  submitPolicy() {
+    const { policyName, policyType, policyCompany, policyPremium, policyFreq, policyExpiry } = this.state;
+    if (!policyName.trim()) { this.showToast('⚠️ 請輸入保單名稱'); return; }
+    const prem = String(policyPremium).trim() === '' ? '' : parseFloat(policyPremium);
+    if (prem !== '' && (!isFinite(prem) || prem < 0)) { this.showToast('⚠️ 請輸入有效的保費'); return; }
+    const pol = { id: Date.now(), name: policyName.trim(), type: policyType, company: policyCompany.trim(), premium: prem === '' ? '' : String(prem), freq: policyFreq, expiry: policyExpiry || '—' };
+    this.setState(s => ({ policies: [...s.policies, pol], showPolicySheet: false, policyName: '', policyCompany: '', policyPremium: '', policyExpiry: '' }));
+    this.showToast('✓ 保單已新增');
+  }
+
+  submitAsset() {
+    const { editAssetType, editAssetAmount } = this.state;
+    const raw = String(editAssetAmount).trim();
+    const newAmount = raw === '' ? 0 : parseFloat(raw);
+    if (!isFinite(newAmount) || newAmount < 0) { this.showToast('⚠️ 請輸入有效金額'); return; }
+    const now = new Date();
+    const dateStr = this.todayStr();
+    const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    this.setState(s => {
+      const oldAmount = parseFloat(s.assets[editAssetType]) || 0;
+      const rec = { id: Date.now(), assetType: editAssetType, oldAmount, newAmount, date: dateStr, time: timeStr };
+      return {
+        assets: { ...s.assets, [editAssetType]: raw === '' ? '' : String(newAmount) },
+        assetHistory: [rec, ...s.assetHistory].slice(0, 50),
+        showAssetSheet: false, editAssetAmount: '',
+      };
+    });
+    this.showToast('✓ 資產已儲存');
+  }
+
+  renderVals() {
+    const s = this.state;
+    const { tab, recordsTab, analysisTab, insuranceTab, profileTab, currentMonth,
+      transactions, budgets, assets, policies, profile,
+      txType, txAmount, txCategory, txNote, txDate, txBank, txBankCustom, banks,
+      showTxSheet, showBudgetSheet, showPolicySheet, showAssetSheet,
+      budgetCategory, budgetAmount, policyName, policyType, policyCompany,
+      policyPremium, policyFreq, policyExpiry, editAssetType, editAssetAmount,
+      showAIPanel, aiMessages, aiTyping, fabOpen } = s;
+
+    const fmt = n => Math.round(n).toLocaleString('zh-TW');
+    const ac = '#6C8EF5', mc = '#526080';
+    const tc = t => tab === t ? ac : mc;
+    const seg = (val, cur) => ({ bg: val === cur ? 'rgba(108,142,245,0.14)' : 'transparent', color: val === cur ? '#6C8EF5' : '#526080' });
+    const pill = (val, cur) => ({ bg: val === cur ? 'rgba(108,142,245,0.12)' : 'transparent', color: val === cur ? '#6C8EF5' : '#526080', border: val === cur ? '1px solid rgba(108,142,245,0.22)' : '1px solid transparent' });
+
+    const catEmoji = { '餐飲':'🍜','交通':'🚗','娛樂':'🎮','購物':'🛍️','醫療保健':'💊','其他':'📦','薪資':'💼','投資收益':'📈','獎金':'🎁','租金收入':'🏠','其他收入':'💰' };
+    const expCats = ['餐飲','交通','娛樂','購物','醫療保健','其他'];
+    const bankIcon = b => b === '現金' ? '💵' : b === '信用卡' ? '💳' : b === '郵局' ? '📮' : '🏦';
+    const bankList = Array.isArray(banks) && banks.length ? banks : ['現金'];
+    const incCats = ['薪資','投資收益','獎金','租金收入','其他收入'];
+
+    // Month transactions
+    const monthTxs = transactions.filter(tx => this.inMonth(tx.date, currentMonth.year, currentMonth.month));
+    const monthIncome = monthTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+    const monthExpense = monthTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    const monthBalance = monthIncome - monthExpense;
+    const allIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+    const allExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+
+    // Assets
+    const assetDefs = [
+      { key: '現金 & 存款', emoji: '💰', color: '#6C8EF5', bg: 'rgba(108,142,245,0.06)', borderColor: 'rgba(108,142,245,0.12)' },
+      { key: '股票 & ETF', emoji: '📈', color: '#34D399', bg: 'rgba(52,211,153,0.06)', borderColor: 'rgba(52,211,153,0.12)' },
+      { key: '基金 & 債券', emoji: '🏦', color: '#E9B44C', bg: 'rgba(233,180,76,0.06)', borderColor: 'rgba(233,180,76,0.12)' },
+      { key: '不動產', emoji: '🏠', color: '#F87171', bg: 'rgba(248,113,113,0.06)', borderColor: 'rgba(248,113,113,0.12)' },
+    ];
+    const customPalette = [
+      { color:'#A78BFA', bg:'rgba(167,139,250,0.06)', borderColor:'rgba(167,139,250,0.12)' },
+      { color:'#34D399', bg:'rgba(52,211,153,0.06)', borderColor:'rgba(52,211,153,0.12)' },
+      { color:'#E9B44C', bg:'rgba(233,180,76,0.06)', borderColor:'rgba(233,180,76,0.12)' },
+      { color:'#F87171', bg:'rgba(248,113,113,0.06)', borderColor:'rgba(248,113,113,0.12)' },
+      { color:'#6C8EF5', bg:'rgba(108,142,245,0.06)', borderColor:'rgba(108,142,245,0.12)' },
+    ];
+    const customDefs = (s.customAssetDefs || []).map((d, i) => ({
+      key: d.key, emoji: d.emoji, isCustom: true,
+      ...customPalette[i % customPalette.length],
+      onDelete: () => this.setState(prev => {
+        const newDefs = prev.customAssetDefs.filter(cd => cd.id !== d.id);
+        const newAssets = { ...prev.assets };
+        delete newAssets[d.key];
+        return { customAssetDefs: newDefs, assets: newAssets };
+      })
+    }));
+    const allAssetDefs = [...assetDefs.map(d => ({ ...d, isCustom: false })), ...customDefs];
+    const assetItems = allAssetDefs.map(def => ({
+      ...def,
+      amount: parseFloat(assets[def.key]) || 0,
+      amountText: `NT$${fmt(parseFloat(assets[def.key]) || 0)}`,
+      onEdit: () => this.setState({ showAssetSheet: true, editAssetType: def.key, editAssetAmount: String(assets[def.key] || '') }),
+    }));
+    const totalAssets = assetItems.reduce((s, a) => s + a.amount, 0);
+
+    // Asset history
+    const assetEmojiMap = { '現金 & 存款':'💰', '股票 & ETF':'📈', '基金 & 債券':'🏦', '不動產':'🏠' };
+    const assetColorMap = { '現金 & 存款':'rgba(108,142,245,0.12)', '股票 & ETF':'rgba(52,211,153,0.12)', '基金 & 債券':'rgba(233,180,76,0.12)', '不動產':'rgba(248,113,113,0.12)' };
+    // 自訂類別的異動紀錄原本一律顯示 💼，改成沿用建立時挑的圖示與配色
+    customDefs.forEach(d => { assetEmojiMap[d.key] = d.emoji; assetColorMap[d.key] = d.borderColor; });
+    const assetHistory = s.assetHistory || [];
+    const assetHistoryDisplay = assetHistory.map(rec => {
+      const diff = rec.newAmount - rec.oldAmount;
+      return {
+        ...rec,
+        emoji: assetEmojiMap[rec.assetType] || '💼',
+        dotBg: assetColorMap[rec.assetType] || 'rgba(255,255,255,0.06)',
+        dateDisplay: `${rec.date} ${rec.time}`,
+        newAmountText: `NT$${fmt(rec.newAmount)}`,
+        changeText: diff === 0 ? '無變動' : (diff > 0 ? `▲ NT$${fmt(diff)}` : `▼ NT$${fmt(Math.abs(diff))}`),
+        changeColor: diff > 0 ? '#34D399' : diff < 0 ? '#F87171' : '#526080',
+      };
+    });
+    const lastUpdate = assetHistory[0];
+    const assetLastUpdated = lastUpdate ? `最後更新：${lastUpdate.date} ${lastUpdate.time}` : '尚未記錄';
+    const netWorth = totalAssets + (allIncome - allExpense);
+
+    // Budget
+    const budgetCatDefs = [
+      { name:'餐飲', emoji:'🍜', barColor:'#6C8EF5' }, { name:'交通', emoji:'🚗', barColor:'#34D399' },
+      { name:'娛樂', emoji:'🎮', barColor:'#E9B44C' }, { name:'購物', emoji:'🛍️', barColor:'#F87171' }, { name:'醫療保健', emoji:'💊', barColor:'#A78BFA' }
+    ];
+    const budgetItems = budgetCatDefs.map(def => {
+      const spent = monthTxs.filter(t => t.type === 'expense' && t.category === def.name).reduce((s, t) => s + t.amount, 0);
+      const limit = parseFloat(budgets[def.name]) || 0;
+      const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
+      return { ...def, spent, limit, spentText: `NT$${fmt(spent)}`, limitText: limit > 0 ? `NT$${fmt(limit)}` : '未設定', pctWidth: `${pct}%`, onSetBudget: () => this.setState({ showBudgetSheet: true, budgetCategory: def.name, budgetAmount: String(budgets[def.name] || '') }) };
+    });
+    const budgetTotal = budgetCatDefs.reduce((s, d) => s + (parseFloat(budgets[d.name]) || 0), 0);
+    const budgetSpent = budgetCatDefs.reduce((s, d) => s + monthTxs.filter(t => t.type === 'expense' && t.category === d.name).reduce((ss, t) => ss + t.amount, 0), 0);
+    const budgetPct = budgetTotal > 0 ? Math.min(100, (budgetSpent / budgetTotal) * 100) : 0;
+
+    // Transactions list
+    // 舊資料（或掃描／語音記帳）沒有 bank 欄位，清單就不顯示帳戶標籤
+    const currentMonthTxItems = [...monthTxs].sort((a, b) => (this.parseDate(b.date) - this.parseDate(a.date)) || (b.id - a.id)).map(tx => ({ ...tx, emoji: catEmoji[tx.category] || '📦', hasBank: !!tx.bank, bankLabel: tx.bank ? `${bankIcon(tx.bank)} ${tx.bank}` : '', amountColor: tx.type === 'income' ? '#34D399' : '#F87171', amountText: (tx.type === 'income' ? '+' : '−') + 'NT$' + fmt(tx.amount), dateDisplay: tx.note ? `${tx.date} · ${tx.note}` : tx.date, onDelete: () => this.setState(prev => ({ transactions: prev.transactions.filter(t => t.id !== tx.id) })) }));
+    const recentTxs = currentMonthTxItems.slice(0, 4);
+
+    // Policies
+    const policyTypeEmoji = { '壽險':'❤️','醫療險':'🏥','意外險':'⚡','重大傷病險':'🧬','其他':'📋' };
+    const policyItems = policies.map(p => ({ ...p, typeEmoji: policyTypeEmoji[p.type] || '📋', premiumText: `NT$${fmt(parseFloat(p.premium) || 0)}`, onDelete: () => this.setState(prev => ({ policies: prev.policies.filter(pol => pol.id !== p.id) })) }));
+    const annualPremium = policies.reduce((s, p) => { const pr = parseFloat(p.premium) || 0; return s + (p.freq === '月繳' ? pr * 12 : p.freq === '半年繳' ? pr * 2 : pr); }, 0);
+    const covTypes = ['壽險','醫療險','意外險','重大傷病險'];
+    const gapCount = covTypes.filter(t => !policies.some(p => p.type === t)).length;
+
+    // Coverage analysis
+    const targets = { '壽險': '保額建議年薪 10 倍', '醫療險': '建議實支實付型', '意外險': '保額建議 200 萬以上', '重大傷病險': '建議 100 萬以上' };
+    const coverageItems = covTypes.map(type => {
+      const hasCov = policies.some(p => p.type === type);
+      return { label: `${policyTypeEmoji[type]} ${type}`, statusText: hasCov ? '✅ 已覆蓋' : '❌ 未覆蓋', statusColor: hasCov ? '#34D399' : '#F87171', pctWidth: hasCov ? '100%' : '0%', barColor: hasCov ? '#34D399' : '#F87171', target: targets[type] };
+    });
+
+    // Category items for form
+    const currentCatList = txType === 'expense' ? expCats : incCats;
+    const categoryItems = currentCatList.map(cat => ({ name: cat, emoji: catEmoji[cat], bg: txCategory === cat ? 'rgba(108,142,245,0.15)' : 'rgba(255,255,255,0.04)', border: txCategory === cat ? '1px solid rgba(108,142,245,0.3)' : '1px solid rgba(255,255,255,0.06)', color: txCategory === cat ? '#6C8EF5' : '#8899BB', onSelect: () => this.setState({ txCategory: cat }) }));
+
+    const bankOptions = [...bankList.map(b => ({ value: b, label: `${bankIcon(b)} ${b}` })), { value: CUSTOM_BANK, label: '＋ 自訂銀行 / 帳戶' }];
+
+    const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    const ap = t => pill(t, analysisTab);
+    const sp = t => seg(t, recordsTab);
+    const ip = t => seg(t, insuranceTab);
+    const profileTitle = { main:'我的', assets:'資產彙整', ai:'AI 智慧分析', settings:'帳戶設定' }[profileTab] || '我的';
+
+    return {
+      tab, isHome: tab==='home', isRecords: tab==='records', isAnalysis: tab==='analysis', isInsurance: tab==='insurance', isProfile: tab==='profile',
+      isTransactions: recordsTab==='transactions', isBudgetPage: recordsTab==='budget',
+      isTrend: analysisTab==='trend', isCategory: analysisTab==='category', isAssets: analysisTab==='assets', isCashflow: analysisTab==='cashflow', isPremium: analysisTab==='premium',
+      isPolicies: insuranceTab==='policies', isCoverage: insuranceTab==='coverage', isClaims: insuranceTab==='claims',
+      isProfileMain: profileTab==='main', isProfileAssets: profileTab==='assets', isProfileAI: profileTab==='ai', isProfileSettings: profileTab==='settings',
+      isProfileSub: profileTab !== 'main', profileTitle,
+      // Computed display
+      netWorthText: `NT$ ${fmt(netWorth)}`,
+      netWorthSub: transactions.length > 0 ? `資產 + 現金流 共計` : `尚無記錄 · 開始記帳以追蹤資產`,
+      allIncomeText: `NT$${fmt(allIncome)}`, allExpenseText: `NT$${fmt(allExpense)}`,
+      monthIncomeText: `NT$${fmt(monthIncome)}`, monthExpenseText: `NT$${fmt(monthExpense)}`,
+      monthBalanceText: `NT$${fmt(Math.abs(monthBalance))}`,
+      balanceColor: monthBalance >= 0 ? '#34D399' : '#F87171',
+      totalAssetsText: `NT$ ${fmt(totalAssets)}`,
+      assetLastUpdated, assetHistoryDisplay,
+      hasAssetHistory: assetHistoryDisplay.length > 0,
+      noAssetHistory: assetHistoryDisplay.length === 0,
+      clearAssetHistory: () => this.setState({ assetHistory: [] }),
+      hasBudget: budgetTotal > 0, noBudget: budgetTotal === 0,
+      budgetSpentText: `NT$${fmt(budgetSpent)}`, budgetTotalText: budgetTotal > 0 ? `NT$${fmt(budgetTotal)}` : '未設定',
+      budgetPctText: `${Math.round(budgetPct)}%`, budgetPctWidth: `${budgetPct}%`,
+      budgetRemainText: budgetTotal > 0 ? `NT$${fmt(Math.max(0, budgetTotal - budgetSpent))}` : '—',
+      currentMonthLabel: `${currentMonth.year}年 ${monthNames[currentMonth.month - 1]}`,
+      hasTxs: currentMonthTxItems.length > 0, noTxs: currentMonthTxItems.length === 0,
+      hasRecentTxs: recentTxs.length > 0, noRecentTxs: recentTxs.length === 0,
+      currentMonthTxItems, recentTxs, budgetItems, assetItems, policyItems, coverageItems,
+      hasPolicies: policyItems.length > 0, noPolicies: policyItems.length === 0,
+      policyCount: policies.length, gapCount, annualPremiumText: `NT$${fmt(annualPremium)}`,
+      // Tab colors
+      homeTabColor: tc('home'), recordsTabColor: tc('records'), analysisTabColor: tc('analysis'), insuranceTabColor: tc('insurance'), profileTabColor: tc('profile'),
+      // Sub-tabs
+      recTransBg: sp('transactions').bg, recTransColor: sp('transactions').color, recBudgetBg: sp('budget').bg, recBudgetColor: sp('budget').color,
+      trendBg: ap('trend').bg, trendColor: ap('trend').color, trendBorder: ap('trend').border,
+      catBg: ap('category').bg, catColor: ap('category').color, catBorder: ap('category').border,
+      assetsBg: ap('assets').bg, assetsColor: ap('assets').color, assetsBorder: ap('assets').border,
+      cashBg: ap('cashflow').bg, cashColor: ap('cashflow').color, cashBorder: ap('cashflow').border,
+      premBg: ap('premium').bg, premColor: ap('premium').color, premBorder: ap('premium').border,
+      polBg: ip('policies').bg, polColor: ip('policies').color, covBg: ip('coverage').bg, covColor: ip('coverage').color, claimsBg: ip('claims').bg, claimsColor: ip('claims').color,
+      // Profile
+      profileAvatar: profile.name ? profile.name.charAt(0) : '👤',
+      profileGreeting: profile.name ? `你好，${profile.name}！` : '您好！',
+      profileName: profile.name, profileEmail: profile.email, profileMonthlyIncome: profile.monthlyIncome,
+      // TX form
+      showTxSheet, txAmount, txNote, txDate, txType, categoryItems,
+      txBank, txBankCustom, bankOptions, isCustomBank: txBank === CUSTOM_BANK,
+      txExpenseBg: txType === 'expense' ? '#F87171' : 'transparent',
+      txExpenseColor: txType === 'expense' ? '#fff' : '#526080',
+      txIncomeBg: txType === 'income' ? '#34D399' : 'transparent',
+      txIncomeColor: txType === 'income' ? '#fff' : '#526080',
+      txSubmitLabel: txType === 'expense' ? '記錄支出' : '記錄收入',
+      txSubmitBg: txType === 'expense' ? '#F87171' : '#34D399',
+      // Budget form
+      showBudgetSheet, budgetCategory, budgetAmount,
+      // Policy form
+      showPolicySheet, policyName, policyType, policyCompany, policyPremium, policyFreq, policyExpiry,
+      // Asset form
+      showAssetSheet, editAssetType, editAssetAmount,
+      // AI
+      showAIPanel, aiMessages, aiTyping,
+      showToast: !!s.toast, toastMsg: s.toast,
+      darkMode: s.darkMode, colorScheme: s.darkMode ? 'dark' : 'light',
+      darkToggleBg: s.darkMode ? 'linear-gradient(135deg,#6C8EF5,#A78BFA)' : 'rgba(150,165,185,0.3)',
+      darkToggleDot: s.darkMode ? 'right:2px' : 'left:2px',
+      toggleDarkMode: () => this.setState(prev => ({ darkMode: !prev.darkMode })),
+      showScanSheet: s.showScanSheet, scanStep: s.scanStep,
+      isScanReady: s.scanStep === 'ready', isScanScanning: s.scanStep === 'scanning', isScanResult: s.scanStep === 'result',
+      scanImage: s.scanImage, scanAmount: s.scanAmount, scanShop: s.scanShop, scanDate: s.scanDate,
+      scanCategory: s.scanCategory, scanBank: s.scanBank, scanInvNo: s.scanInvNo, hasScanInvNo: !!s.scanInvNo,
+      scanItems: s.scanItems, hasScanItems: s.scanItems.length > 0,
+      scanText: s.scanText, hasScanText: !!String(s.scanText).trim(), showScanText: s.showScanText,
+      scanTextToggleLabel: s.showScanText ? '收合辨識文字 ▲' : '查看辨識到的文字 ▼',
+      hasScanError: !!s.scanError, scanError: s.scanError,
+      scanStatusText: s.scanStatus || '辨識中…', scanProgressWidth: `${s.scanProgress}%`,
+      scanSourceLabel: s.scanSource === 'qr' ? '📇 已讀取電子發票 QR Code' : s.scanSource === 'ocr' ? '🔍 文字辨識結果，請核對' : '✍️ 手動輸入',
+      scanHeadline: parseFloat(s.scanAmount) > 0 ? `NT$ ${fmt(parseFloat(s.scanAmount))}` : '未讀到金額',
+      scanCatOptions: expCats.map(c => ({ value: c, label: `${catEmoji[c]} ${c}` })),
+      scanBankOptions: bankList.map(b => ({ value: b, label: `${bankIcon(b)} ${b}` })),
+      showVoiceSheet: s.showVoiceSheet, voiceStep: s.voiceStep, voiceData: s.voiceData,
+      isVoiceReady: s.voiceStep === 'ready', isVoiceRecording: s.voiceStep === 'recording',
+      isVoiceAnalyzing: s.voiceStep === 'analyzing', isVoiceResult: s.voiceStep === 'result',
+      voiceTimer: `${Math.floor(s.voiceSeconds/60)}:${String(s.voiceSeconds%60).padStart(2,'0')}`,
+      voiceText: s.voiceData ? s.voiceData.text : '',
+      voiceAmount: s.voiceData ? `NT$ ${s.voiceData.amount.toLocaleString()}` : '',
+      voiceCategory: s.voiceData ? s.voiceData.category : '',
+      voiceNote: s.voiceData ? s.voiceData.note : '',
+      fabOpen, showFab: tab === 'home' || tab === 'records',
+      fabRotate: fabOpen ? 'rotate(45deg)' : 'rotate(0deg)',
+      // Handlers
+      goHome: () => this.setState({ tab:'home', fabOpen:false }),
+      goRecords: () => this.setState({ tab:'records', fabOpen:false }),
+      goAnalysis: () => this.setState({ tab:'analysis', analysisTab:'trend', fabOpen:false }),
+      goInsurance: () => this.setState({ tab:'insurance', insuranceTab:'policies', fabOpen:false }),
+      goProfile: () => this.setState({ tab:'profile', profileTab:'main', fabOpen:false }),
+      goBudget: () => this.setState({ tab:'records', recordsTab:'budget', fabOpen:false }),
+      prevMonth: () => this.setState(prev => { let m=prev.currentMonth.month-1, y=prev.currentMonth.year; if(m<1){m=12;y--;} return {currentMonth:{year:y,month:m}}; }),
+      nextMonth: () => this.setState(prev => { let m=prev.currentMonth.month+1, y=prev.currentMonth.year; if(m>12){m=1;y++;} return {currentMonth:{year:y,month:m}}; }),
+      setRecordsTab_transactions: () => this.setState({ recordsTab:'transactions' }),
+      setRecordsTab_budget: () => this.setState({ recordsTab:'budget' }),
+      setAnalysisTab_trend: () => this.setState({ analysisTab:'trend' }),
+      setAnalysisTab_category: () => this.setState({ analysisTab:'category' }),
+      setAnalysisTab_assets: () => this.setState({ analysisTab:'assets' }),
+      setAnalysisTab_cashflow: () => this.setState({ analysisTab:'cashflow' }),
+      setAnalysisTab_premium: () => this.setState({ analysisTab:'premium' }),
+      setInsuranceTab_policies: () => this.setState({ insuranceTab:'policies' }),
+      setInsuranceTab_coverage: () => this.setState({ insuranceTab:'coverage' }),
+      setInsuranceTab_claims: () => this.setState({ insuranceTab:'claims' }),
+      backToProfile: () => this.setState({ profileTab:'main' }),
+      goAssets: () => this.setState({ profileTab:'assets' }),
+      goAI: () => this.setState({ profileTab:'ai' }),
+      goSettings: () => this.setState({ profileTab:'settings' }),
+      toggleFab: () => this.setState(prev => ({ fabOpen: !prev.fabOpen })),
+      openScanSheet: () => { this.scanRun = (this.scanRun || 0) + 1; this.setState(p => Object.assign({ showScanSheet:true, fabOpen:false }, this.resetScan(p))); },
+      closeScanSheet: () => { this.scanRun = (this.scanRun || 0) + 1; this.setState(p => Object.assign({ showScanSheet:false }, this.resetScan(p))); },
+      rescanReceipt: () => { this.scanRun = (this.scanRun || 0) + 1; this.setState(p => this.resetScan(p)); },
+      onScanFile: e => this.onScanFile(e),
+      onScanAmount: e => this.setState({ scanAmount: e.target.value }),
+      onScanShop: e => this.setState({ scanShop: e.target.value }),
+      onScanCategory: e => this.setState({ scanCategory: e.target.value }),
+      onScanDate: e => this.setState({ scanDate: e.target.value }),
+      onScanBank: e => this.setState({ scanBank: e.target.value }),
+      toggleScanText: () => this.setState(p => ({ showScanText: !p.showScanText })),
+      confirmScan: () => this.confirmScan(),
+      openVoiceSheet: () => { clearInterval(this.timers.voiceTick); clearTimeout(this.timers.voice); this.setState({ showVoiceSheet:true, voiceStep:'ready', voiceData:null, voiceSeconds:0, fabOpen:false }); },
+      closeVoiceSheet: () => { clearInterval(this.timers.voiceTick); clearTimeout(this.timers.voice); this.setState({ showVoiceSheet:false, voiceStep:'ready', voiceData:null, voiceSeconds:0 }); },
+      startVoice: () => this.startVoice(),
+      stopVoice: () => this.stopVoice(),
+      confirmVoice: () => this.confirmVoice(),
+      openExpenseTx: () => this.setState(p => ({ showTxSheet:true, txType:'expense', txCategory:'餐飲', txAmount:'', txNote:'', fabOpen:false, ...this.resetBank(p) })),
+      openIncomeTx: () => this.setState(p => ({ showTxSheet:true, txType:'income', txCategory:'薪資', txAmount:'', txNote:'', fabOpen:false, ...this.resetBank(p) })),
+      setTxExpense: () => this.setState({ txType:'expense', txCategory:'餐飲' }),
+      setTxIncome: () => this.setState({ txType:'income', txCategory:'薪資' }),
+      onTxAmount: e => this.setState({ txAmount: e.target.value }),
+      onTxNote: e => this.setState({ txNote: e.target.value }),
+      onTxDate: e => this.setState({ txDate: e.target.value }),
+      onTxBank: e => this.setState({ txBank: e.target.value, txBankCustom: '' }),
+      onTxBankCustom: e => this.setState({ txBankCustom: e.target.value }),
+      closeTxSheet: () => this.setState({ showTxSheet:false }),
+      submitTx: () => this.submitTx(),
+      onBudgetAmount: e => this.setState({ budgetAmount: e.target.value }),
+      closeBudgetSheet: () => this.setState({ showBudgetSheet:false }),
+      submitBudget: () => this.submitBudget(),
+      openPolicySheet: () => this.setState({ showPolicySheet:true }),
+      onPolicyName: e => this.setState({ policyName: e.target.value }),
+      onPolicyType: e => this.setState({ policyType: e.target.value }),
+      onPolicyCompany: e => this.setState({ policyCompany: e.target.value }),
+      onPolicyPremium: e => this.setState({ policyPremium: e.target.value }),
+      onPolicyFreq: e => this.setState({ policyFreq: e.target.value }),
+      onPolicyExpiry: e => this.setState({ policyExpiry: e.target.value }),
+      closePolicySheet: () => this.setState({ showPolicySheet:false }),
+      submitPolicy: () => this.submitPolicy(),
+      closeAssetSheet: () => this.setState({ showAssetSheet:false }),
+      onAssetAmount: e => this.setState({ editAssetAmount: e.target.value }),
+      submitAsset: () => this.submitAsset(),
+      showAddAssetCat: s.showAddAssetCat,
+      newAssetName: s.newAssetName, newAssetEmoji: s.newAssetEmoji, newAssetAmount: s.newAssetAmount,
+      openAddAssetCat: () => this.setState({ showAddAssetCat: true, newAssetName: '', newAssetEmoji: '💼', newAssetAmount: '' }),
+      closeAddAssetCat: () => this.setState({ showAddAssetCat: false }),
+      onNewAssetName: e => this.setState({ newAssetName: e.target.value }),
+      onNewAssetEmoji: e => this.setState({ newAssetEmoji: e.target.value }),
+      onNewAssetAmount: e => this.setState({ newAssetAmount: e.target.value }),
+      submitAddAssetCat: () => this.submitAddAssetCat(),
+      emojiOptions: ['💵','🪙','📊','💎','🚗','🏗️','🌾','✈️','📱','🖥️','🎯','🚀'].map(em => ({ emoji: em, bg: s.newAssetEmoji === em ? 'rgba(108,142,245,0.18)' : 'rgba(255,255,255,0.04)', border: s.newAssetEmoji === em ? '1px solid rgba(108,142,245,0.35)' : '1px solid rgba(255,255,255,0.06)', onPick: () => this.setState({ newAssetEmoji: em }) })),
+      onProfileName: e => this.setState(prev => ({ profile: { ...prev.profile, name: e.target.value } })),
+      onProfileEmail: e => this.setState(prev => ({ profile: { ...prev.profile, email: e.target.value } })),
+      onProfileIncome: e => this.setState(prev => ({ profile: { ...prev.profile, monthlyIncome: e.target.value } })),
+      triggerAI: () => this.triggerAI(),
+      closeAI: () => { this.aiRun++; clearTimeout(this.timers.ai); this.setState({ showAIPanel:false, aiMessages:[], aiTyping:false }); },
+    };
+  }
+}
+</script>
+</body>
+</html>

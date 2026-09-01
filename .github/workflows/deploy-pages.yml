@@ -1,0 +1,41 @@
+name: Deploy PWA to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# configure-pages 需要 pages:write 才能自動開啟 Pages，deploy-pages 需要 id-token
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時只跑一個部署，但不取消進行中的，避免半途中斷
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true          # 倉庫還沒開 Pages 的話自動開啟
+
+      - name: Upload pwa/ as the site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./pwa
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
