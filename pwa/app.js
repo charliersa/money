@@ -5,6 +5,7 @@
      · 頂端狀態列顯示真實時間，不再寫死 9:41
      · 語音記帳改用 Web Speech API，不再產生模擬資料
      · 切換深色模式時同步更新 <meta name="theme-color">
+   掛載程式在 boot.js，不在這裡。
    ────────────────────────────────────────────────────────────── */
 const CUSTOM_BANK = '__custom__';
 
@@ -1140,28 +1141,4 @@ class Component extends DCLogic {
 }
 
 
-/* ══ 啟動 ══════════════════════════════════════════════════ */
-(function boot() {
-  var tpl = document.getElementById('app-template');
-  var host = document.getElementById('app-root');
-  if (!tpl || !host) { console.error('找不到 #app-template 或 #app-root'); return; }
-  var app = DCRuntime.mount(Component, tpl.textContent, host);
-  window.__app = app;
-
-  // manifest 的捷徑（?action=expense / ?action=scan）
-  var action = new URLSearchParams(location.search).get('action');
-  if (action === 'expense') {
-    app.setState(function (p) {
-      return Object.assign({ showTxSheet: true, txType: 'expense', txCategory: '餐飲',
-                             txAmount: '', txNote: '' }, app.resetBank(p));
-    });
-  } else if (action === 'income') {
-    app.setState(function (p) {
-      return Object.assign({ showTxSheet: true, txType: 'income', txCategory: '薪資',
-                             txAmount: '', txNote: '' }, app.resetBank(p));
-    });
-  } else if (action === 'scan') {
-    app.scanRun = (app.scanRun || 0) + 1;
-    app.setState(function (p) { return Object.assign({ showScanSheet: true }, app.resetScan(p)); });
-  }
-})();
+window.Component = Component;

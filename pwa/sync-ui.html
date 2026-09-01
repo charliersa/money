@@ -1,0 +1,43 @@
+<!-- ═══ 雲端同步（由 build_index.py 插入設定頁） ═══ -->
+<div style="background:var(--card-bg);border-radius:20px;padding:18px;border:1px solid rgba(52,211,153,0.18);">
+  <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px;">
+    <div style="width:30px;height:30px;background:rgba(52,211,153,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4.5 12.5a3 3 0 01-.4-5.97A4 4 0 0111.8 5.6a2.9 2.9 0 01-.3 6.9H4.5z" stroke="#34D399" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 10.5V6M6.2 7.8L8 6l1.8 1.8" stroke="#34D399" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div style="font-size:14px;font-weight:700;color:var(--text-1);">雲端同步</div>
+  </div>
+  <div style="font-size:11px;color:var(--text-3);line-height:1.6;margin-bottom:14px;">資料會存到你自己 Google 雲端硬碟裡的試算表，換裝置也看得到。</div>
+
+  <sc-if value="{{ syncNotConfigured }}" hint-placeholder-val="{{ false }}">
+    <div style="background:rgba(233,180,76,0.08);border:1px solid rgba(233,180,76,0.2);border-radius:12px;padding:12px;">
+      <div style="font-size:12px;font-weight:600;color:#E9B44C;margin-bottom:4px;">尚未設定</div>
+      <div style="font-size:11px;color:var(--text-4);line-height:1.7;">請在 <span style="font-family:monospace;">pwa/config.js</span> 填入 Google OAuth 用戶端 ID 後重新部署。</div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ syncConfigured }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 12px;background:var(--input-bg);border-radius:12px;border:1px solid var(--border-2);margin-bottom:10px;">
+      <span style="font-size:12px;color:var(--text-3);">狀態</span>
+      <span style="font-size:12px;font-weight:600;color:{{ syncStatusColor }};">{{ syncStatusText }}</span>
+    </div>
+
+    <sc-if value="{{ syncDisconnected }}" hint-placeholder-val="{{ true }}">
+      <div onClick="{{ connectSync }}" style="background:linear-gradient(135deg,#34D399,#6C8EF5);border-radius:14px;padding:13px;text-align:center;font-size:14px;font-weight:700;color:#fff;cursor:pointer;">連接 Google 帳號</div>
+      <div style="font-size:10px;color:var(--text-4);line-height:1.7;margin-top:8px;">只會要求「存取本應用程式建立的檔案」權限，看不到你雲端硬碟裡的其他東西。</div>
+    </sc-if>
+
+    <sc-if value="{{ syncConnected }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border-1);">
+        <div><div style="font-size:13px;color:var(--text-2);font-weight:500;">自動同步</div><div style="font-size:11px;color:var(--text-3);margin-top:1px;">{{ syncLastText }}</div></div>
+        <div onClick="{{ toggleSyncAuto }}" style="width:46px;height:26px;background:{{ syncAutoToggleBg }};border-radius:13px;position:relative;cursor:pointer;transition:background 0.3s;flex-shrink:0;"><div style="width:20px;height:20px;background:#fff;border-radius:50%;position:absolute;top:3px;{{ syncAutoToggleDot }};box-shadow:0 2px 6px rgba(0,0,0,0.25);transition:all 0.25s;"></div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <div onClick="{{ syncNow }}" style="flex:2;padding:12px;text-align:center;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);border-radius:14px;font-size:13px;font-weight:700;color:#34D399;cursor:pointer;">立即同步</div>
+        <div onClick="{{ disconnectSync }}" style="flex:1;padding:12px;text-align:center;background:var(--border-1);border-radius:14px;font-size:13px;font-weight:600;color:var(--text-3);cursor:pointer;">中斷</div>
+      </div>
+      <sc-if value="{{ hasSyncSheet }}" hint-placeholder-val="{{ false }}">
+        <a href="{{ syncSheetUrl }}" target="_blank" rel="noopener" style="display:block;text-align:center;font-size:11px;color:#6C8EF5;font-weight:600;margin-top:12px;">在 Google 試算表開啟 →</a>
+      </sc-if>
+    </sc-if>
+  </sc-if>
+</div>

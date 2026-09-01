@@ -42,6 +42,24 @@ tpl = tpl.replace('color-scheme:dark;', 'color-scheme:{{ colorScheme }};', 1)
 fix('AI 分析語音中…', '解析語音內容…', '語音分析文案')
 fix('AI 解析結果', '語音解析結果', '語音結果文案')
 
+
+# ── 插入雲端同步的介面（PWA 專屬，設計稿沒有） ─────────────────
+SYNC_CARD = io.open('pwa/sync-ui.html', encoding='utf-8').read().strip()
+SYNC_CONFLICT = io.open('pwa/sync-conflict.html', encoding='utf-8').read().strip()
+
+NL = chr(10)
+settings_anchor = ('            <div style="background:var(--card-bg);border-radius:20px;padding:18px;'
+                   'border:1px solid var(--border-1);">' + NL +
+                   '              <div style="font-size:14px;font-weight:700;color:var(--text-1);'
+                   'margin-bottom:14px;">顯示與通知</div>')
+
+indented = NL.join(('            ' + ln) if ln.strip() else ln for ln in SYNC_CARD.split(NL))
+fix(settings_anchor, indented + NL + settings_anchor, '設定頁的雲端同步卡片')
+
+fix('  <!-- ═══ ADD ASSET CATEGORY SHEET ═══ -->',
+    SYNC_CONFLICT + NL + NL + '  <!-- ═══ ADD ASSET CATEGORY SHEET ═══ -->',
+    '同步衝突面板')
+
 HEAD = '''<!DOCTYPE html>
 <html lang="zh-Hant-TW">
 <head>
@@ -173,8 +191,11 @@ select option { background: var(--card-bg); color: var(--text-1); }
 TAIL = '''</script>
 
 <script src="./vendor/chart.umd.min.js"></script>
+<script src="./config.js"></script>
 <script src="./runtime.js"></script>
 <script src="./app.js"></script>
+<script src="./sync.js"></script>
+<script src="./boot.js"></script>
 <script>
 /* ── Service Worker：離線可用 ─────────────────────────────── */
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {

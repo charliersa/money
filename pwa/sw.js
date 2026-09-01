@@ -5,7 +5,7 @@
    · 外部資源（字型、jsQR、Tesseract 語言模型）：用到才快取
    改版時記得把 VERSION 加一，舊快取會在啟用階段被清掉。
    ────────────────────────────────────────────────────────────── */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL_CACHE = 'financeapp-shell-' + VERSION;
 const RUNTIME_CACHE = 'financeapp-runtime-' + VERSION;
 
@@ -14,6 +14,9 @@ const SHELL = [
   './index.html',
   './runtime.js',
   './app.js',
+  './config.js',
+  './sync.js',
+  './boot.js',
   './vendor/chart.umd.min.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
@@ -50,6 +53,9 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+
+  // Google 的登入與 API 一律直通網路：快取授權過的回應既無意義也不安全
+  if (/(^|\.)(googleapis\.com|google\.com|gstatic\.com)$/.test(url.hostname)) return;
 
   // 導覽：優先拿新版，離線時退回快取
   if (req.mode === 'navigate') {

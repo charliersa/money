@@ -1,0 +1,17 @@
+<!-- ═══ 同步衝突（由 build_index.py 插入） ═══ -->
+<sc-if value="{{ showSyncConflict }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:70;">
+    <div onClick="{{ closeSyncConflict }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;background:var(--card-bg);border-radius:24px 24px 0 0;border-top:1px solid rgba(233,180,76,0.3);padding:16px 20px 40px;animation:sheetUp 0.35s cubic-bezier(0.16,1,0.3,1);">
+      <div style="display:flex;justify-content:center;margin-bottom:16px;"><div style="width:36px;height:4px;background:var(--border-4);border-radius:2px;"></div></div>
+      <div style="font-size:18px;font-weight:800;color:var(--text-1);margin-bottom:6px;">⚠️ 同步衝突</div>
+      <div style="font-size:13px;color:var(--text-3);line-height:1.7;margin-bottom:8px;">{{ syncConflictText }}</div>
+      <div style="font-size:11px;color:var(--text-4);line-height:1.7;margin-bottom:20px;">選擇後另一份會被覆蓋，這個動作無法復原。</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div onClick="{{ resolveSyncLocal }}" style="padding:14px;text-align:center;background:linear-gradient(135deg,#6C8EF5,#A78BFA);border-radius:16px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;">保留這台裝置的資料（上傳覆蓋雲端）</div>
+        <div onClick="{{ resolveSyncRemote }}" style="padding:14px;text-align:center;background:var(--input-bg);border:1px solid var(--border-2);border-radius:16px;font-size:14px;font-weight:700;color:var(--text-2);cursor:pointer;">保留雲端的資料（下載覆蓋本機）</div>
+        <div onClick="{{ closeSyncConflict }}" style="padding:12px;text-align:center;font-size:13px;font-weight:600;color:var(--text-4);cursor:pointer;">稍後再決定</div>
+      </div>
+    </div>
+  </div>
+</sc-if>

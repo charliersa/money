@@ -596,6 +596,49 @@ select option { background: var(--card-bg); color: var(--text-1); }
                 <div><div style="font-size:11px;color:var(--text-4);margin-bottom:6px;font-weight:500;">月收入（用於 AI 分析）</div><input type="number" value="{{ profileMonthlyIncome }}" onChange="{{ onProfileIncome }}" placeholder="0" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:12px;padding:11px 14px;color:var(--text-1);font-size:14px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" min="0" /></div>
               </div>
             </div>
+            <!-- ═══ 雲端同步（由 build_index.py 插入設定頁） ═══ -->
+            <div style="background:var(--card-bg);border-radius:20px;padding:18px;border:1px solid rgba(52,211,153,0.18);">
+              <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px;">
+                <div style="width:30px;height:30px;background:rgba(52,211,153,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4.5 12.5a3 3 0 01-.4-5.97A4 4 0 0111.8 5.6a2.9 2.9 0 01-.3 6.9H4.5z" stroke="#34D399" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 10.5V6M6.2 7.8L8 6l1.8 1.8" stroke="#34D399" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <div style="font-size:14px;font-weight:700;color:var(--text-1);">雲端同步</div>
+              </div>
+              <div style="font-size:11px;color:var(--text-3);line-height:1.6;margin-bottom:14px;">資料會存到你自己 Google 雲端硬碟裡的試算表，換裝置也看得到。</div>
+
+              <sc-if value="{{ syncNotConfigured }}" hint-placeholder-val="{{ false }}">
+                <div style="background:rgba(233,180,76,0.08);border:1px solid rgba(233,180,76,0.2);border-radius:12px;padding:12px;">
+                  <div style="font-size:12px;font-weight:600;color:#E9B44C;margin-bottom:4px;">尚未設定</div>
+                  <div style="font-size:11px;color:var(--text-4);line-height:1.7;">請在 <span style="font-family:monospace;">pwa/config.js</span> 填入 Google OAuth 用戶端 ID 後重新部署。</div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ syncConfigured }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 12px;background:var(--input-bg);border-radius:12px;border:1px solid var(--border-2);margin-bottom:10px;">
+                  <span style="font-size:12px;color:var(--text-3);">狀態</span>
+                  <span style="font-size:12px;font-weight:600;color:{{ syncStatusColor }};">{{ syncStatusText }}</span>
+                </div>
+
+                <sc-if value="{{ syncDisconnected }}" hint-placeholder-val="{{ true }}">
+                  <div onClick="{{ connectSync }}" style="background:linear-gradient(135deg,#34D399,#6C8EF5);border-radius:14px;padding:13px;text-align:center;font-size:14px;font-weight:700;color:#fff;cursor:pointer;">連接 Google 帳號</div>
+                  <div style="font-size:10px;color:var(--text-4);line-height:1.7;margin-top:8px;">只會要求「存取本應用程式建立的檔案」權限，看不到你雲端硬碟裡的其他東西。</div>
+                </sc-if>
+
+                <sc-if value="{{ syncConnected }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border-1);">
+                    <div><div style="font-size:13px;color:var(--text-2);font-weight:500;">自動同步</div><div style="font-size:11px;color:var(--text-3);margin-top:1px;">{{ syncLastText }}</div></div>
+                    <div onClick="{{ toggleSyncAuto }}" style="width:46px;height:26px;background:{{ syncAutoToggleBg }};border-radius:13px;position:relative;cursor:pointer;transition:background 0.3s;flex-shrink:0;"><div style="width:20px;height:20px;background:#fff;border-radius:50%;position:absolute;top:3px;{{ syncAutoToggleDot }};box-shadow:0 2px 6px rgba(0,0,0,0.25);transition:all 0.25s;"></div></div>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:12px;">
+                    <div onClick="{{ syncNow }}" style="flex:2;padding:12px;text-align:center;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);border-radius:14px;font-size:13px;font-weight:700;color:#34D399;cursor:pointer;">立即同步</div>
+                    <div onClick="{{ disconnectSync }}" style="flex:1;padding:12px;text-align:center;background:var(--border-1);border-radius:14px;font-size:13px;font-weight:600;color:var(--text-3);cursor:pointer;">中斷</div>
+                  </div>
+                  <sc-if value="{{ hasSyncSheet }}" hint-placeholder-val="{{ false }}">
+                    <a href="{{ syncSheetUrl }}" target="_blank" rel="noopener" style="display:block;text-align:center;font-size:11px;color:#6C8EF5;font-weight:600;margin-top:12px;">在 Google 試算表開啟 →</a>
+                  </sc-if>
+                </sc-if>
+              </sc-if>
+            </div>
             <div style="background:var(--card-bg);border-radius:20px;padding:18px;border:1px solid var(--border-1);">
               <div style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:14px;">顯示與通知</div>
               <div style="display:flex;flex-direction:column;">
@@ -1009,6 +1052,24 @@ select option { background: var(--card-bg); color: var(--text-1); }
     </div>
   </sc-if>
 
+<!-- ═══ 同步衝突（由 build_index.py 插入） ═══ -->
+<sc-if value="{{ showSyncConflict }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:70;">
+    <div onClick="{{ closeSyncConflict }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;background:var(--card-bg);border-radius:24px 24px 0 0;border-top:1px solid rgba(233,180,76,0.3);padding:16px 20px 40px;animation:sheetUp 0.35s cubic-bezier(0.16,1,0.3,1);">
+      <div style="display:flex;justify-content:center;margin-bottom:16px;"><div style="width:36px;height:4px;background:var(--border-4);border-radius:2px;"></div></div>
+      <div style="font-size:18px;font-weight:800;color:var(--text-1);margin-bottom:6px;">⚠️ 同步衝突</div>
+      <div style="font-size:13px;color:var(--text-3);line-height:1.7;margin-bottom:8px;">{{ syncConflictText }}</div>
+      <div style="font-size:11px;color:var(--text-4);line-height:1.7;margin-bottom:20px;">選擇後另一份會被覆蓋，這個動作無法復原。</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div onClick="{{ resolveSyncLocal }}" style="padding:14px;text-align:center;background:linear-gradient(135deg,#6C8EF5,#A78BFA);border-radius:16px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;">保留這台裝置的資料（上傳覆蓋雲端）</div>
+        <div onClick="{{ resolveSyncRemote }}" style="padding:14px;text-align:center;background:var(--input-bg);border:1px solid var(--border-2);border-radius:16px;font-size:14px;font-weight:700;color:var(--text-2);cursor:pointer;">保留雲端的資料（下載覆蓋本機）</div>
+        <div onClick="{{ closeSyncConflict }}" style="padding:12px;text-align:center;font-size:13px;font-weight:600;color:var(--text-4);cursor:pointer;">稍後再決定</div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
   <!-- ═══ ADD ASSET CATEGORY SHEET ═══ -->
   <sc-if value="{{ showAddAssetCat }}" hint-placeholder-val="{{ false }}">
     <div style="position:absolute;inset:0;z-index:60;">
@@ -1072,8 +1133,11 @@ select option { background: var(--card-bg); color: var(--text-1); }
   </sc-if></script>
 
 <script src="./vendor/chart.umd.min.js"></script>
+<script src="./config.js"></script>
 <script src="./runtime.js"></script>
 <script src="./app.js"></script>
+<script src="./sync.js"></script>
+<script src="./boot.js"></script>
 <script>
 /* ── Service Worker：離線可用 ─────────────────────────────── */
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {

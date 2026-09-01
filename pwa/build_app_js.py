@@ -241,37 +241,14 @@ header = '''/* ─────────────────────�
      · 頂端狀態列顯示真實時間，不再寫死 9:41
      · 語音記帳改用 Web Speech API，不再產生模擬資料
      · 切換深色模式時同步更新 <meta name="theme-color">
+   掛載程式在 boot.js，不在這裡。
    ────────────────────────────────────────────────────────────── */
 '''
 
-boot = '''
+# 掛載程式改放 pwa/boot.js：sync.js 必須先包裝 Component 才能掛載。
+# 明確掛到 window，不倚賴 class 宣告在腳本之間的全域繫結行為。
+boot = '\n\nwindow.Component = Component;\n'
 
-/* ══ 啟動 ══════════════════════════════════════════════════ */
-(function boot() {
-  var tpl = document.getElementById('app-template');
-  var host = document.getElementById('app-root');
-  if (!tpl || !host) { console.error('找不到 #app-template 或 #app-root'); return; }
-  var app = DCRuntime.mount(Component, tpl.textContent, host);
-  window.__app = app;
-
-  // manifest 的捷徑（?action=expense / ?action=scan）
-  var action = new URLSearchParams(location.search).get('action');
-  if (action === 'expense') {
-    app.setState(function (p) {
-      return Object.assign({ showTxSheet: true, txType: 'expense', txCategory: '餐飲',
-                             txAmount: '', txNote: '' }, app.resetBank(p));
-    });
-  } else if (action === 'income') {
-    app.setState(function (p) {
-      return Object.assign({ showTxSheet: true, txType: 'income', txCategory: '薪資',
-                             txAmount: '', txNote: '' }, app.resetBank(p));
-    });
-  } else if (action === 'scan') {
-    app.scanRun = (app.scanRun || 0) + 1;
-    app.setState(function (p) { return Object.assign({ showScanSheet: true }, app.resetScan(p)); });
-  }
-})();
-'''
 
 io.open('pwa/app.js', 'w', encoding='utf-8', newline='\n').write(header + logic + boot)
 print('已套用：')
