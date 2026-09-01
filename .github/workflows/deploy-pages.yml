@@ -24,12 +24,13 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
+      # 注意：GITHUB_TOKEN 沒有建立 Pages 站台的權限（那需要 administration:write），
+      # 所以第一次必須在 Settings → Pages 手動把 Source 設為 GitHub Actions。
+      # 設定完成後這一步只是讀取設定，不會再失敗。
       - name: Configure Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true          # 倉庫還沒開 Pages 的話自動開啟
 
       - name: Upload pwa/ as the site
         uses: actions/upload-pages-artifact@v3
