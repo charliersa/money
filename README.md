@@ -9,6 +9,7 @@
 | 路徑 | 說明 |
 | --- | --- |
 | `pwa/` | 正式的 PWA，部署到 GitHub Pages 的就是這個目錄。詳見 [`pwa/README.md`](pwa/README.md) |
+| `SYNC.md` | Google 試算表同步的設定步驟、同步流程與疑難排解 |
 | `FinanceApp.dc.html` | 原始設計稿（Claude Design canvas），`pwa/` 的樣板與邏輯由此產生 |
 | `support.js` | 設計稿用的 dc-runtime，PWA 版本不需要 |
 
@@ -22,6 +23,7 @@
 - 發票掃描：電子發票 QR Code（本機解析）＋ 收據 OCR（Tesseract.js）
 - 語音記帳：Web Speech API（zh-TW）＋ 中文數字解析
 - 深色模式、離線可用、可加入主畫面
+- 雲端同步：資料存到使用者自己 Google 雲端硬碟裡的試算表（設定見 [`SYNC.md`](SYNC.md)）
 
 ## 開發
 

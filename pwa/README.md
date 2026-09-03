@@ -76,15 +76,8 @@ node   pwa/gen_icons.cjs      # → pwa/icons/*.png（圖示沒改就不用跑�
 資料預設只存在本機 localStorage。填好 `config.js` 的 Client ID 後，設定頁會出現
 「雲端同步」，可以把資料同步到**使用者自己 Google 雲端硬碟裡的試算表**。
 
-### 設定 Client ID（只需做一次）
-
-1. [Google Cloud Console](https://console.cloud.google.com/) 建立專案
-2. 啟用 **Google Sheets API** 與 **Google Drive API**
-3. OAuth 同意畫面：External，範圍**只加** `https://www.googleapis.com/auth/drive.file`
-   （不要加 `.../auth/spreadsheets`，那是敏感範圍會被要求送審），建立後按「發布應用程式」
-4. 憑證 → OAuth 用戶端 ID → 網頁應用程式，已授權的 JavaScript 來源填部署網址
-   （例如 `https://charliersa.github.io` 與 `http://localhost:8765`），重新導向 URI 留空
-5. 把用戶端 ID 填進 `pwa/config.js` 的 `googleClientId`
+> **設定步驟、同步流程圖、試算表欄位規格與疑難排解一律看
+> [`../SYNC.md`](../SYNC.md)**，這裡只留摘要，避免兩份文件各說各話。
 
 ### 運作方式
 
@@ -101,8 +94,10 @@ node   pwa/gen_icons.cjs      # → pwa/icons/*.png（圖示沒改就不用跑�
 
 - 每次 API 呼叫約 0.3～2 秒；Sheets API 每位使用者每分鐘 60 次寫入
 - 衝突處理是整份文件層級的「二選一」，不做逐筆合併
-- 在 Sheets 裡手動編輯會在下次同步時讀回來，但欄位格式要維持原樣
-  （型別欄要填「收入」或「支出」、自訂資產欄要填 `Y`／`N`）
+- 在 Sheets 裡手動編輯時，除了維持欄位格式（型別欄填「收入」或「支出」、
+  自訂資產欄填 `Y`／`N`），**還必須把「設定」分頁的「更新時間」一併改新**，
+  否則 App 不會認為雲端有變更，改的東西讀不回來也會被下次上傳覆蓋。
+  詳見 [`../SYNC.md`](../SYNC.md#手動編輯的規則)
 - iOS Safari 的第三方 Cookie 政策較嚴，靜默續期可能失效而需要重新按一次連接
 
 ## 已知限制

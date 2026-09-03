@@ -16,6 +16,6 @@
         重新導向 URI 留空
    ────────────────────────────────────────────────────────────── */
 window.APP_CONFIG = {
-  googleClientId: '',                 // 例：'1234567890-abc.apps.googleusercontent.com'
+  googleClientId: '588226828631-3op4gj3ja8ttvb1nloh5l48r9lehsqfk.apps.googleusercontent.com',                 // 例：'1234567890-abc.apps.googleusercontent.com'
   spreadsheetName: '財務管家資料',      // 第一次連線時在使用者的雲端硬碟建立的檔名
 };
