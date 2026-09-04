@@ -27,7 +27,9 @@ class Component extends DCLogic {
     showTxSheet: false, txType: 'expense', txAmount: '', txCategory: '餐飲', txNote: '', txDate: '2026-07-08',
     banks: ['現金', '台灣銀行', '中國信託', '國泰世華', '玉山銀行', '台新銀行', '富邦銀行', '第一銀行', '郵局', '信用卡'],
     txBank: '現金', txBankCustom: '',
-    showBudgetSheet: false, budgetCategory: '餐飲', budgetAmount: '',
+    // 各類別的預算備註（例：「含外食與飲料」），沒填的類別就不存 key
+    budgetNotes: {},
+    showBudgetSheet: false, budgetCategory: '餐飲', budgetAmount: '', budgetNote: '',
     showPolicySheet: false, policyName: '', policyType: '壽險', policyCompany: '', policyPremium: '', policyFreq: '年繳', policyExpiry: '',
     showAssetSheet: false, editAssetType: '現金 & 存款', editAssetAmount: '', editAssetBanks: [],
     // 帳簿 ↔ 資產彙整的連動：帳戶 → 資產類別（'' 代表不連動），
@@ -148,7 +150,7 @@ class Component extends DCLogic {
       const raw = localStorage.getItem(this.STORAGE_KEY);
       if (raw) {
         const saved = JSON.parse(raw);
-        const keys = ['transactions','budgets','assets','assetHistory','policies','profile','customAssetDefs','banks','txBank','bankAsset','assetBaseAt','darkMode'];
+        const keys = ['transactions','budgets','assets','assetHistory','policies','profile','customAssetDefs','banks','txBank','bankAsset','assetBaseAt','budgetNotes','darkMode'];
         keys.forEach(k => { if (saved[k] !== undefined) patch[k] = saved[k]; });
         // 連動功能之前存的檔沒有基準時間。缺的一律補上「現在」，舊帳就不會
         // 回頭改動已經對過的資產金額，只有之後新記的帳才開始連動。
@@ -190,8 +192,8 @@ class Component extends DCLogic {
 
   save(state) {
     try {
-      const { transactions, budgets, assets, assetHistory, policies, profile, customAssetDefs, banks, txBank, bankAsset, assetBaseAt, darkMode } = state;
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify({ transactions, budgets, assets, assetHistory, policies, profile, customAssetDefs, banks, txBank, bankAsset, assetBaseAt, darkMode }));
+      const { transactions, budgets, budgetNotes, assets, assetHistory, policies, profile, customAssetDefs, banks, txBank, bankAsset, assetBaseAt, darkMode } = state;
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify({ transactions, budgets, budgetNotes, assets, assetHistory, policies, profile, customAssetDefs, banks, txBank, bankAsset, assetBaseAt, darkMode }));
     } catch(e) {}
   }
 
@@ -693,6 +695,7 @@ class Component extends DCLogic {
 
     // Auto-save when data changes
     if (prevState.transactions !== s.transactions || prevState.budgets !== s.budgets ||
+        prevState.budgetNotes !== s.budgetNotes ||
         prevState.assets !== s.assets || prevState.assetHistory !== s.assetHistory ||
         prevState.policies !== s.policies || prevState.profile !== s.profile ||
         prevState.customAssetDefs !== s.customAssetDefs || prevState.banks !== s.banks ||
@@ -857,12 +860,22 @@ class Component extends DCLogic {
   }
 
   submitBudget() {
-    const { budgetCategory, budgetAmount } = this.state;
+    const { budgetCategory, budgetAmount, budgetNote } = this.state;
     const amt = String(budgetAmount).trim() === '' ? '' : parseFloat(budgetAmount);
     if (amt !== '' && (!isFinite(amt) || amt < 0)) { this.showToast('⚠️ 請輸入有效的預算金額'); return; }
     const value = amt === '' ? '' : String(amt);
-    this.setState(s => ({ budgets: { ...s.budgets, [budgetCategory]: value }, showBudgetSheet: false, budgetAmount: '' }));
-    this.showToast(value === '' ? `✓ 已清除${budgetCategory}預算` : `✓ ${budgetCategory}預算已儲存`);
+    const note = String(budgetNote || '').trim();
+    this.setState(s => {
+      // 備註清空就把 key 拿掉，不要留一堆空字串
+      const notes = { ...(s.budgetNotes || {}) };
+      if (note) notes[budgetCategory] = note; else delete notes[budgetCategory];
+      return {
+        budgets: { ...s.budgets, [budgetCategory]: value },
+        budgetNotes: notes,
+        showBudgetSheet: false, budgetAmount: '', budgetNote: '',
+      };
+    });
+    this.showToast(value === '' && !note ? `✓ 已清除${budgetCategory}預算` : `✓ ${budgetCategory}預算已儲存`);
   }
 
   submitPolicy() {
@@ -1023,7 +1036,8 @@ class Component extends DCLogic {
       const spent = monthTxs.filter(t => t.type === 'expense' && t.category === def.name).reduce((s, t) => s + t.amount, 0);
       const limit = parseFloat(budgets[def.name]) || 0;
       const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
-      return { ...def, spent, limit, spentText: `NT$${fmt(spent)}`, limitText: limit > 0 ? `NT$${fmt(limit)}` : '未設定', pctWidth: `${pct}%`, onSetBudget: () => this.setState({ showBudgetSheet: true, budgetCategory: def.name, budgetAmount: String(budgets[def.name] || '') }) };
+      const note = (s.budgetNotes || {})[def.name] || '';
+      return { ...def, spent, limit, note, hasNote: !!note, spentText: `NT$${fmt(spent)}`, limitText: limit > 0 ? `NT$${fmt(limit)}` : '未設定', pctWidth: `${pct}%`, onSetBudget: () => this.setState({ showBudgetSheet: true, budgetCategory: def.name, budgetAmount: String(budgets[def.name] || ''), budgetNote: (s.budgetNotes || {})[def.name] || '' }) };
     });
     const budgetTotal = budgetCatDefs.reduce((s, d) => s + (parseFloat(budgets[d.name]) || 0), 0);
     const budgetSpent = budgetCatDefs.reduce((s, d) => s + monthTxs.filter(t => t.type === 'expense' && t.category === d.name).reduce((ss, t) => ss + t.amount, 0), 0);
@@ -1142,7 +1156,7 @@ class Component extends DCLogic {
       txSubmitLabel: txType === 'expense' ? '記錄支出' : '記錄收入',
       txSubmitBg: txType === 'expense' ? '#F87171' : '#34D399',
       // Budget form
-      showBudgetSheet, budgetCategory, budgetAmount,
+      showBudgetSheet, budgetCategory, budgetAmount, budgetNote: s.budgetNote || '',
       // Policy form
       showPolicySheet, policyName, policyType, policyCompany, policyPremium, policyFreq, policyExpiry,
       // Asset form
@@ -1229,7 +1243,8 @@ class Component extends DCLogic {
       closeTxSheet: () => this.setState({ showTxSheet:false }),
       submitTx: () => this.submitTx(),
       onBudgetAmount: e => this.setState({ budgetAmount: e.target.value }),
-      closeBudgetSheet: () => this.setState({ showBudgetSheet:false }),
+      onBudgetNote: e => this.setState({ budgetNote: e.target.value }),
+      closeBudgetSheet: () => this.setState({ showBudgetSheet:false, budgetNote: '' }),
       submitBudget: () => this.submitBudget(),
       openPolicySheet: () => this.setState({ showPolicySheet:true }),
       onPolicyName: e => this.setState({ policyName: e.target.value }),

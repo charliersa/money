@@ -18,7 +18,7 @@
   /* ── 工作表結構 ─────────────────────────────────────────── */
   var TABS = {
     tx:     { title: '交易',     header: ['id', '日期', '類型', '類別', '金額', '帳戶', '備註'], cols: 'A:G' },
-    budget: { title: '預算',     header: ['類別', '每月上限'], cols: 'A:B' },
+    budget: { title: '預算',     header: ['類別', '每月上限', '備註'], cols: 'A:C' },
     asset:  { title: '資產',     header: ['類別', '基準金額', '圖示', '自訂', '自訂ID', '基準時間'], cols: 'A:F' },
     hist:   { title: '資產異動', header: ['id', '類別', '原金額', '新金額', '日期', '時間'], cols: 'A:F' },
     policy: { title: '保單',     header: ['id', '名稱', '險種', '公司', '保費', '繳別', '到期日'], cols: 'A:G' },
@@ -219,7 +219,7 @@
               str(t.category), num(t.amount), str(t.bank), str(t.note)];
     });
     rows.budget = Object.keys(st.budgets || {}).map(function (k) {
-      return [k, amountCell(st.budgets[k])];
+      return [k, amountCell(st.budgets[k]), str((st.budgetNotes || {})[k])];
     });
     var customById = {};
     (st.customAssetDefs || []).forEach(function (d) { customById[d.key] = d; });
@@ -266,9 +266,14 @@
       };
     }).filter(function (t) { return t.date && t.amount > 0; });
 
-    var budgets = {};
-    get('budget').forEach(function (r) { if (str(r[0])) budgets[str(r[0])] = amountBack(r[1]); });
-    if (Object.keys(budgets).length) patch.budgets = budgets;
+    var budgets = {}, budgetNotes = {};
+    get('budget').forEach(function (r) {
+      var k = str(r[0]);
+      if (!k) return;
+      budgets[k] = amountBack(r[1]);
+      if (str(r[2])) budgetNotes[k] = str(r[2]);
+    });
+    if (Object.keys(budgets).length) { patch.budgets = budgets; patch.budgetNotes = budgetNotes; }
 
     var assets = {}, defs = [], baseAt = {};
     get('asset').forEach(function (r) {

@@ -338,6 +338,9 @@ select option { background: var(--card-bg); color: var(--text-1); }
                   <div onClick="{{ bud.onSetBudget }}" style="font-size:12px;color:#6C8EF5;cursor:pointer;font-weight:600;">設定</div>
                 </div>
                 <div style="background:var(--border-3);border-radius:4px;height:5px;overflow:hidden;"><div style="width:{{ bud.pctWidth }};height:100%;background:{{ bud.barColor }};border-radius:4px;transition:width 0.5s ease;"></div></div>
+                <sc-if value="{{ bud.hasNote }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:11px;color:var(--text-3);margin-top:9px;line-height:1.6;word-break:break-word;">📝 {{ bud.note }}</div>
+                </sc-if>
               </div>
             </sc-for>
           </div>
@@ -824,9 +827,14 @@ select option { background: var(--card-bg); color: var(--text-1); }
         <div style="display:flex;justify-content:center;margin-bottom:16px;"><div style="width:36px;height:4px;background:var(--border-4);border-radius:2px;"></div></div>
         <div style="font-size:18px;font-weight:800;color:var(--text-1);margin-bottom:4px;">設定預算</div>
         <div style="font-size:13px;color:var(--text-3);margin-bottom:22px;">{{ budgetCategory }}</div>
-        <div style="margin-bottom:22px;">
+        <div style="margin-bottom:18px;">
           <div style="font-size:11px;color:var(--text-4);margin-bottom:8px;font-weight:500;">每月預算上限 (NT$)</div>
           <input type="number" value="{{ budgetAmount }}" onChange="{{ onBudgetAmount }}" placeholder="例：5000" min="0" style="background:var(--input-bg);border:1px solid rgba(108,142,245,0.25);border-radius:14px;padding:14px 18px;color:var(--text-1);font-size:22px;font-weight:700;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" />
+        </div>
+        <div style="margin-bottom:22px;">
+          <div style="font-size:11px;color:var(--text-4);margin-bottom:8px;font-weight:500;">備註（選填）</div>
+          <input type="text" value="{{ budgetNote }}" onChange="{{ onBudgetNote }}" placeholder="例：含外食與手搖飲，不含聚餐" maxlength="60" style="background:var(--input-bg);border:1px solid var(--border-2);border-radius:14px;padding:12px 16px;color:var(--text-1);font-size:14px;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" />
+          <div style="font-size:10px;color:var(--text-4);margin-top:7px;">會顯示在預算管理的類別卡片上，清空即可移除。</div>
         </div>
         <div style="display:flex;gap:10px;">
           <div onClick="{{ closeBudgetSheet }}" style="flex:1;padding:14px;text-align:center;background:var(--border-1);border-radius:16px;font-size:14px;font-weight:600;color:var(--text-3);cursor:pointer;">取消</div>
