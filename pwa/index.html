@@ -526,10 +526,21 @@ select option { background: var(--card-bg); color: var(--text-1); }
               <div style="font-size:14px;font-weight:700;color:var(--text-1);margin-bottom:14px;">資產分類</div>
               <div style="display:flex;flex-direction:column;gap:8px;">
                 <sc-for list="{{ assetItems }}" as="ast" hint-placeholder-count="4">
-                  <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 12px;background:{{ ast.bg }};border-radius:12px;border:1px solid {{ ast.borderColor }};">
-                    <div style="display:flex;align-items:center;gap:9px;"><span style="font-size:16px;">{{ ast.emoji }}</span><span style="font-size:13px;font-weight:500;color:var(--text-1);">{{ ast.key }}</span></div>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                      <div style="font-size:13px;font-weight:600;color:var(--text-1);">{{ ast.amountText }}</div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 12px;background:{{ ast.bg }};border-radius:12px;border:1px solid {{ ast.borderColor }};gap:8px;">
+                    <div style="display:flex;align-items:center;gap:9px;min-width:0;">
+                      <span style="font-size:16px;flex-shrink:0;">{{ ast.emoji }}</span>
+                      <div style="min-width:0;">
+                        <div style="font-size:13px;font-weight:500;color:var(--text-1);">{{ ast.key }}</div>
+                        <div style="font-size:10px;color:{{ ast.linkColor }};margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ ast.linkText }}</div>
+                      </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                      <div style="text-align:right;">
+                        <div style="font-size:13px;font-weight:600;color:var(--text-1);">{{ ast.amountText }}</div>
+                        <sc-if value="{{ ast.hasFlow }}" hint-placeholder-val="{{ false }}">
+                          <div style="font-size:10px;color:{{ ast.flowColor }};margin-top:2px;white-space:nowrap;">{{ ast.flowText }}</div>
+                        </sc-if>
+                      </div>
                       <div onClick="{{ ast.onEdit }}" style="font-size:11px;color:{{ ast.color }};cursor:pointer;font-weight:600;padding:3px 8px;background:var(--border-1);border-radius:8px;">編輯</div>
                       <sc-if value="{{ ast.isCustom }}" hint-placeholder-val="{{ false }}">
                         <div onClick="{{ ast.onDelete }}" style="font-size:11px;color:var(--text-6);cursor:pointer;padding:3px 8px;background:rgba(248,113,113,0.07);border-radius:8px;">刪除</div>
@@ -566,7 +577,7 @@ select option { background: var(--card-bg); color: var(--text-1); }
             </sc-if>
             <sc-if value="{{ noAssetHistory }}" hint-placeholder-val="{{ true }}">
               <div style="background:rgba(255,255,255,0.02);border-radius:16px;padding:14px;border:1px dashed var(--border-3);text-align:center;">
-                <div style="font-size:12px;color:var(--text-5);">點擊「編輯」更新資產金額，系統將自動記錄每次異動</div>
+                <div style="font-size:12px;color:var(--text-5);">點「編輯」設定基準金額與連動帳戶，之後記帳就會自動加減，每次手動校正也會留下紀錄</div>
               </div>
             </sc-if>
           </div>
@@ -777,6 +788,7 @@ select option { background: var(--card-bg); color: var(--text-1); }
                 <option value="{{ bk.value }}">{{ bk.label }}</option>
               </sc-for>
             </select>
+            <div style="font-size:10px;color:var(--text-4);margin-top:6px;">{{ txBankAssetHint }}</div>
           </div>
           <sc-if value="{{ isCustomBank }}" hint-placeholder-val="{{ false }}">
             <div style="margin-bottom:12px;animation:fadeIn 0.2s ease;">
@@ -1118,13 +1130,22 @@ select option { background: var(--card-bg); color: var(--text-1); }
   <sc-if value="{{ showAssetSheet }}" hint-placeholder-val="{{ false }}">
     <div style="position:absolute;inset:0;z-index:60;">
       <div onClick="{{ closeAssetSheet }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);"></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;background:var(--card-bg);border-radius:24px 24px 0 0;border-top:1px solid rgba(52,211,153,0.2);padding:16px 20px 40px;animation:sheetUp 0.35s cubic-bezier(0.16,1,0.3,1);">
+      <div style="position:absolute;bottom:0;left:0;right:0;background:var(--card-bg);border-radius:24px 24px 0 0;border-top:1px solid rgba(52,211,153,0.2);padding:16px 20px 40px;max-height:86%;overflow-y:auto;animation:sheetUp 0.35s cubic-bezier(0.16,1,0.3,1);">
         <div style="display:flex;justify-content:center;margin-bottom:16px;"><div style="width:36px;height:4px;background:var(--border-4);border-radius:2px;"></div></div>
         <div style="font-size:18px;font-weight:800;color:var(--text-1);margin-bottom:4px;">{{ editAssetType }}</div>
-        <div style="font-size:13px;color:var(--text-3);margin-bottom:22px;">輸入目前持有金額</div>
+        <div style="font-size:13px;color:var(--text-3);margin-bottom:22px;">輸入目前持有金額，並選擇要連動的帳戶</div>
         <div style="margin-bottom:22px;">
-          <div style="font-size:11px;color:var(--text-4);margin-bottom:8px;font-weight:500;">金額 (NT$)</div>
+          <div style="font-size:11px;color:var(--text-4);margin-bottom:8px;font-weight:500;">目前金額 (NT$)</div>
           <input type="number" value="{{ editAssetAmount }}" onChange="{{ onAssetAmount }}" placeholder="0" min="0" style="background:var(--input-bg);border:1px solid rgba(52,211,153,0.25);border-radius:14px;padding:14px 18px;color:var(--text-1);font-size:22px;font-weight:700;width:100%;outline:none;font-family:Plus Jakarta Sans,sans-serif;" />
+        </div>
+        <div style="margin-bottom:22px;">
+          <div style="font-size:11px;color:var(--text-4);margin-bottom:8px;font-weight:500;">連動帳戶</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;">
+            <sc-for list="{{ editAssetBankChips }}" as="bc" hint-placeholder-count="3">
+              <div onClick="{{ bc.onToggle }}" style="padding:7px 11px;border-radius:11px;background:{{ bc.bg }};border:{{ bc.border }};color:{{ bc.color }};font-size:12px;font-weight:600;cursor:pointer;">{{ bc.label }}</div>
+            </sc-for>
+          </div>
+          <div style="font-size:10px;color:var(--text-4);margin-top:8px;line-height:1.6;">勾選的帳戶在帳簿記一筆，這個類別的金額就跟著加減。上面填的金額會成為新的基準，之後記的帳從這個數字往上算。</div>
         </div>
         <div style="display:flex;gap:10px;">
           <div onClick="{{ closeAssetSheet }}" style="flex:1;padding:14px;text-align:center;background:var(--border-1);border-radius:16px;font-size:14px;font-weight:600;color:var(--text-3);cursor:pointer;">取消</div>

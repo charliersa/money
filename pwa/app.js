@@ -29,7 +29,10 @@ class Component extends DCLogic {
     txBank: '現金', txBankCustom: '',
     showBudgetSheet: false, budgetCategory: '餐飲', budgetAmount: '',
     showPolicySheet: false, policyName: '', policyType: '壽險', policyCompany: '', policyPremium: '', policyFreq: '年繳', policyExpiry: '',
-    showAssetSheet: false, editAssetType: '現金 & 存款', editAssetAmount: '',
+    showAssetSheet: false, editAssetType: '現金 & 存款', editAssetAmount: '', editAssetBanks: [],
+    // 帳簿 ↔ 資產彙整的連動：帳戶 → 資產類別（'' 代表不連動），
+    // 以及每個資產類別最後一次手動校正的時間戳。
+    bankAsset: {}, assetBaseAt: {},
     customAssetDefs: [],
     showAddAssetCat: false, newAssetName: '', newAssetEmoji: '💼', newAssetAmount: '',
     toast: '',
@@ -55,6 +58,52 @@ class Component extends DCLogic {
 
   resetBank(prev) {
     return { txBank: this.defaultBank(prev), txBankCustom: '' };
+  }
+
+  // ═══ 帳簿 ↔ 資產彙整的連動 ═══
+  // assets[類別] 存的是「基準金額」：使用者最後一次手動校正輸入的數字。
+  // 顯示金額 = 基準金額 + 校正之後、記在連動帳戶上的所有收支。
+  // 用推算而不是直接改數字，刪掉一筆帳資產就會自己還原，不必反向補記。
+  CASH_ASSET = '現金 & 存款';
+
+  // 沒設定過的帳戶預設連到「現金 & 存款」；信用卡是負債性質，預設不連動。
+  bankAssetOf(state, bank) {
+    if (!bank) return '';
+    const map = state.bankAsset || {};
+    if (map[bank] !== undefined) return map[bank];
+    return bank === '信用卡' ? '' : this.CASH_ASSET;
+  }
+
+  // 某個資產類別自基準時間以來的帳簿淨額
+  assetFlow(state, key) {
+    const since = (state.assetBaseAt || {})[key] || 0;
+    return (state.transactions || []).reduce((sum, t) => {
+      if (!(t.id > since)) return sum;
+      if (this.bankAssetOf(state, t.bank) !== key) return sum;
+      const amt = parseFloat(t.amount) || 0;
+      return sum + (t.type === 'income' ? amt : -amt);
+    }, 0);
+  }
+
+  assetAmount(state, key) {
+    return (parseFloat((state.assets || {})[key]) || 0) + this.assetFlow(state, key);
+  }
+
+  // 沒連到任何資產類別的帳（例如信用卡）：這些錢還沒反映在總資產裡
+  unlinkedFlow(state) {
+    return (state.transactions || []).reduce((sum, t) => {
+      if (this.bankAssetOf(state, t.bank)) return sum;
+      const amt = parseFloat(t.amount) || 0;
+      return sum + (t.type === 'income' ? amt : -amt);
+    }, 0);
+  }
+
+  bankList(state) {
+    return Array.isArray(state.banks) && state.banks.length ? state.banks : ['現金'];
+  }
+
+  banksLinkedTo(state, key) {
+    return this.bankList(state).filter(b => this.bankAssetOf(state, b) === key);
   }
 
   // 以「本地時區」解析 YYYY-MM-DD。new Date('2026-08-01') 會被當成 UTC 午夜，
@@ -99,8 +148,15 @@ class Component extends DCLogic {
       const raw = localStorage.getItem(this.STORAGE_KEY);
       if (raw) {
         const saved = JSON.parse(raw);
-        const keys = ['transactions','budgets','assets','assetHistory','policies','profile','customAssetDefs','banks','txBank','darkMode'];
+        const keys = ['transactions','budgets','assets','assetHistory','policies','profile','customAssetDefs','banks','txBank','bankAsset','assetBaseAt','darkMode'];
         keys.forEach(k => { if (saved[k] !== undefined) patch[k] = saved[k]; });
+        // 連動功能之前存的檔沒有基準時間。缺的一律補上「現在」，舊帳就不會
+        // 回頭改動已經對過的資產金額，只有之後新記的帳才開始連動。
+        const stamp = Date.now();
+        patch.assetBaseAt = { ...(patch.assetBaseAt || {}) };
+        Object.keys(patch.assets || this.state.assets).forEach(k => {
+          if (!patch.assetBaseAt[k]) patch.assetBaseAt[k] = stamp;
+        });
         if (typeof saved.darkMode === 'boolean') dark = saved.darkMode;
       }
     } catch(e) {}
@@ -134,8 +190,8 @@ class Component extends DCLogic {
 
   save(state) {
     try {
-      const { transactions, budgets, assets, assetHistory, policies, profile, customAssetDefs, banks, txBank, darkMode } = state;
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify({ transactions, budgets, assets, assetHistory, policies, profile, customAssetDefs, banks, txBank, darkMode }));
+      const { transactions, budgets, assets, assetHistory, policies, profile, customAssetDefs, banks, txBank, bankAsset, assetBaseAt, darkMode } = state;
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify({ transactions, budgets, assets, assetHistory, policies, profile, customAssetDefs, banks, txBank, bankAsset, assetBaseAt, darkMode }));
     } catch(e) {}
   }
 
@@ -617,6 +673,7 @@ class Component extends DCLogic {
     this.setState(prev => ({
       customAssetDefs: [...prev.customAssetDefs, newDef],
       assets: { ...prev.assets, [key]: amt === '' ? '' : String(amt) },
+      assetBaseAt: { ...(prev.assetBaseAt || {}), [key]: Date.now() },
       showAddAssetCat: false, newAssetName: '', newAssetEmoji: '💼', newAssetAmount: '',
     }));
     this.showToast(`✓ 已新增「${key}」類別`);
@@ -639,7 +696,8 @@ class Component extends DCLogic {
         prevState.assets !== s.assets || prevState.assetHistory !== s.assetHistory ||
         prevState.policies !== s.policies || prevState.profile !== s.profile ||
         prevState.customAssetDefs !== s.customAssetDefs || prevState.banks !== s.banks ||
-        prevState.txBank !== s.txBank || prevState.darkMode !== s.darkMode) {
+        prevState.txBank !== s.txBank || prevState.bankAsset !== s.bankAsset ||
+        prevState.assetBaseAt !== s.assetBaseAt || prevState.darkMode !== s.darkMode) {
       this.save(s);
     }
 
@@ -647,6 +705,7 @@ class Component extends DCLogic {
     if (s.tab === 'analysis') {
       const changed = prevState.tab !== 'analysis' || prevState.analysisTab !== s.analysisTab
         || prevState.transactions !== s.transactions || prevState.assets !== s.assets
+        || prevState.bankAsset !== s.bankAsset || prevState.assetBaseAt !== s.assetBaseAt
         || prevState.policies !== s.policies || prevState.currentMonth !== s.currentMonth
         || prevState.darkMode !== s.darkMode;
       if (changed) this.initChart();
@@ -711,7 +770,7 @@ class Component extends DCLogic {
       } else if (analysisTab === 'assets') {
         const el = document.getElementById('chart-assets'); if (!el) return;
         const keys = ['現金 & 存款','股票 & ETF','基金 & 債券','不動產'];
-        const data = keys.map(k => parseFloat(assets[k]) || 0);
+        const data = keys.map(k => this.assetAmount(this.state, k));
         const total = data.reduce((s,v)=>s+v,0);
         this.charts.assets = new Chart(el, { type: 'doughnut', data: { labels: keys, datasets: [{ data: total > 0 ? data : [1,1,1,1], backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] }, options: { ...baseOpts, cutout: '62%' } });
       } else if (analysisTab === 'cashflow') {
@@ -817,23 +876,35 @@ class Component extends DCLogic {
   }
 
   submitAsset() {
-    const { editAssetType, editAssetAmount } = this.state;
+    const { editAssetType, editAssetAmount, editAssetBanks } = this.state;
     const raw = String(editAssetAmount).trim();
     const newAmount = raw === '' ? 0 : parseFloat(raw);
     if (!isFinite(newAmount) || newAmount < 0) { this.showToast('⚠️ 請輸入有效金額'); return; }
+    const picked = Array.isArray(editAssetBanks) ? editAssetBanks : [];
     const now = new Date();
     const dateStr = this.todayStr();
     const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
     this.setState(s => {
-      const oldAmount = parseFloat(s.assets[editAssetType]) || 0;
-      const rec = { id: Date.now(), assetType: editAssetType, oldAmount, newAmount, date: dateStr, time: timeStr };
+      // 舊金額要用「連動後」的數字，異動紀錄才對得上畫面上原本顯示的值
+      const oldAmount = this.assetAmount(s, editAssetType);
+      // 一個帳戶只能屬於一個資產類別，否則同一筆帳會被算兩次
+      const nextMap = { ...(s.bankAsset || {}) };
+      this.bankList(s).forEach(b => {
+        if (picked.includes(b)) nextMap[b] = editAssetType;
+        else if (this.bankAssetOf(s, b) === editAssetType) nextMap[b] = '';
+      });
+      // 這次輸入的金額成為新基準；時間戳之後記的帳才開始往上加減
+      const stamp = Date.now();
+      const rec = { id: stamp, assetType: editAssetType, oldAmount, newAmount, date: dateStr, time: timeStr, manual: true };
       return {
         assets: { ...s.assets, [editAssetType]: raw === '' ? '' : String(newAmount) },
+        bankAsset: nextMap,
+        assetBaseAt: { ...(s.assetBaseAt || {}), [editAssetType]: stamp },
         assetHistory: [rec, ...s.assetHistory].slice(0, 50),
-        showAssetSheet: false, editAssetAmount: '',
+        showAssetSheet: false, editAssetAmount: '', editAssetBanks: [],
       };
     });
-    this.showToast('✓ 資產已儲存');
+    this.showToast(picked.length ? `✓ 已儲存，並與 ${picked.length} 個帳戶連動` : '✓ 資產已儲存');
   }
 
   renderVals() {
@@ -887,16 +958,36 @@ class Component extends DCLogic {
         const newDefs = prev.customAssetDefs.filter(cd => cd.id !== d.id);
         const newAssets = { ...prev.assets };
         delete newAssets[d.key];
-        return { customAssetDefs: newDefs, assets: newAssets };
+        const newBase = { ...(prev.assetBaseAt || {}) };
+        delete newBase[d.key];
+        // 連到這個類別的帳戶要放掉，否則它們的帳會憑空消失在總資產裡
+        const newMap = { ...(prev.bankAsset || {}) };
+        Object.keys(newMap).forEach(b => { if (newMap[b] === d.key) newMap[b] = ''; });
+        return { customAssetDefs: newDefs, assets: newAssets, assetBaseAt: newBase, bankAsset: newMap };
       })
     }));
     const allAssetDefs = [...assetDefs.map(d => ({ ...d, isCustom: false })), ...customDefs];
-    const assetItems = allAssetDefs.map(def => ({
-      ...def,
-      amount: parseFloat(assets[def.key]) || 0,
-      amountText: `NT$${fmt(parseFloat(assets[def.key]) || 0)}`,
-      onEdit: () => this.setState({ showAssetSheet: true, editAssetType: def.key, editAssetAmount: String(assets[def.key] || '') }),
-    }));
+    const assetItems = allAssetDefs.map(def => {
+      const amount = this.assetAmount(s, def.key);
+      const flow = this.assetFlow(s, def.key);
+      const linked = this.banksLinkedTo(s, def.key);
+      return {
+        ...def,
+        amount,
+        amountText: `NT$${fmt(amount)}`,
+        linkText: linked.length ? `🔗 ${linked.join('・')}` : '未連動帳戶',
+        linkColor: linked.length ? def.color : 'var(--text-5)',
+        hasFlow: flow !== 0,
+        flowText: flow === 0 ? '' : `帳簿 ${flow > 0 ? '+' : '−'}NT$${fmt(Math.abs(flow))}`,
+        flowColor: flow > 0 ? '#34D399' : '#F87171',
+        // 編輯時帶入目前顯示的金額（含連動），存檔後它就是新的基準
+        onEdit: () => this.setState(prev => ({
+          showAssetSheet: true, editAssetType: def.key,
+          editAssetAmount: String(this.assetAmount(prev, def.key) || ''),
+          editAssetBanks: this.banksLinkedTo(prev, def.key),
+        })),
+      };
+    });
     const totalAssets = assetItems.reduce((s, a) => s + a.amount, 0);
 
     // Asset history
@@ -919,7 +1010,9 @@ class Component extends DCLogic {
     });
     const lastUpdate = assetHistory[0];
     const assetLastUpdated = lastUpdate ? `最後更新：${lastUpdate.date} ${lastUpdate.time}` : '尚未記錄';
-    const netWorth = totalAssets + (allIncome - allExpense);
+    // 已連動的收支早就算進 totalAssets 了，這裡只補上還沒連動的帳戶（例如信用卡）
+    const unlinkedFlow = this.unlinkedFlow(s);
+    const netWorth = totalAssets + unlinkedFlow;
 
     // Budget
     const budgetCatDefs = [
@@ -940,6 +1033,32 @@ class Component extends DCLogic {
     // 舊資料（或掃描／語音記帳）沒有 bank 欄位，清單就不顯示帳戶標籤
     const currentMonthTxItems = [...monthTxs].sort((a, b) => (this.parseDate(b.date) - this.parseDate(a.date)) || (b.id - a.id)).map(tx => ({ ...tx, emoji: catEmoji[tx.category] || '📦', hasBank: !!tx.bank, bankLabel: tx.bank ? `${bankIcon(tx.bank)} ${tx.bank}` : '', amountColor: tx.type === 'income' ? '#34D399' : '#F87171', amountText: (tx.type === 'income' ? '+' : '−') + 'NT$' + fmt(tx.amount), dateDisplay: tx.note ? `${tx.date} · ${tx.note}` : tx.date, onDelete: () => this.setState(prev => ({ transactions: prev.transactions.filter(t => t.id !== tx.id) })) }));
     const recentTxs = currentMonthTxItems.slice(0, 4);
+
+    // 記帳表單：這筆會動到哪個資產類別
+    const txBankName = txBank === CUSTOM_BANK ? String(txBankCustom).trim() : txBank;
+    const txLinkedAsset = txBankName ? this.bankAssetOf(s, txBankName) : '';
+    const txBankAssetHint = txLinkedAsset
+      ? `✓ 這筆會同步更新資產彙整的「${txLinkedAsset}」`
+      : '此帳戶未連動資產，只會記在帳簿';
+
+    // 資產面板：可勾選要連動的帳戶
+    const editBanks = Array.isArray(s.editAssetBanks) ? s.editAssetBanks : [];
+    const editAssetBankChips = bankList.map(b => {
+      const on = editBanks.includes(b);
+      const owner = this.bankAssetOf(s, b);
+      const takenBy = !on && owner && owner !== editAssetType ? owner : '';
+      return {
+        name: b,
+        label: `${bankIcon(b)} ${b}${takenBy ? `（現屬 ${takenBy}）` : ''}`,
+        bg: on ? 'rgba(52,211,153,0.14)' : 'var(--input-bg)',
+        border: on ? '1px solid rgba(52,211,153,0.4)' : '1px solid var(--border-2)',
+        color: on ? '#34D399' : 'var(--text-3)',
+        onToggle: () => this.setState(prev => {
+          const cur = Array.isArray(prev.editAssetBanks) ? prev.editAssetBanks : [];
+          return { editAssetBanks: cur.includes(b) ? cur.filter(x => x !== b) : [...cur, b] };
+        }),
+      };
+    });
 
     // Policies
     const policyTypeEmoji = { '壽險':'❤️','醫療險':'🏥','意外險':'⚡','重大傷病險':'🧬','其他':'📋' };
@@ -977,7 +1096,8 @@ class Component extends DCLogic {
       isProfileSub: profileTab !== 'main', profileTitle,
       // Computed display
       netWorthText: `NT$ ${fmt(netWorth)}`,
-      netWorthSub: transactions.length > 0 ? `資產 + 現金流 共計` : `尚無記錄 · 開始記帳以追蹤資產`,
+      netWorthSub: transactions.length === 0 ? `尚無記錄 · 開始記帳以追蹤資產`
+        : unlinkedFlow !== 0 ? `資產 + 未連動帳戶現金流` : `資產彙整已與帳簿連動`,
       allIncomeText: `NT$${fmt(allIncome)}`, allExpenseText: `NT$${fmt(allExpense)}`,
       monthIncomeText: `NT$${fmt(monthIncome)}`, monthExpenseText: `NT$${fmt(monthExpense)}`,
       monthBalanceText: `NT$${fmt(Math.abs(monthBalance))}`,
@@ -1014,6 +1134,7 @@ class Component extends DCLogic {
       // TX form
       showTxSheet, txAmount, txNote, txDate, txType, categoryItems,
       txBank, txBankCustom, bankOptions, isCustomBank: txBank === CUSTOM_BANK,
+      txBankAssetHint, editAssetBankChips,
       txExpenseBg: txType === 'expense' ? '#F87171' : 'transparent',
       txExpenseColor: txType === 'expense' ? '#fff' : '#526080',
       txIncomeBg: txType === 'income' ? '#34D399' : 'transparent',
@@ -1119,7 +1240,7 @@ class Component extends DCLogic {
       onPolicyExpiry: e => this.setState({ policyExpiry: e.target.value }),
       closePolicySheet: () => this.setState({ showPolicySheet:false }),
       submitPolicy: () => this.submitPolicy(),
-      closeAssetSheet: () => this.setState({ showAssetSheet:false }),
+      closeAssetSheet: () => this.setState({ showAssetSheet:false, editAssetBanks: [] }),
       onAssetAmount: e => this.setState({ editAssetAmount: e.target.value }),
       submitAsset: () => this.submitAsset(),
       showAddAssetCat: s.showAddAssetCat,

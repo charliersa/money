@@ -19,10 +19,10 @@
   var TABS = {
     tx:     { title: '交易',     header: ['id', '日期', '類型', '類別', '金額', '帳戶', '備註'], cols: 'A:G' },
     budget: { title: '預算',     header: ['類別', '每月上限'], cols: 'A:B' },
-    asset:  { title: '資產',     header: ['類別', '金額', '圖示', '自訂', '自訂ID'], cols: 'A:E' },
+    asset:  { title: '資產',     header: ['類別', '基準金額', '圖示', '自訂', '自訂ID', '基準時間'], cols: 'A:F' },
     hist:   { title: '資產異動', header: ['id', '類別', '原金額', '新金額', '日期', '時間'], cols: 'A:F' },
     policy: { title: '保單',     header: ['id', '名稱', '險種', '公司', '保費', '繳別', '到期日'], cols: 'A:G' },
-    bank:   { title: '帳戶',     header: ['名稱'], cols: 'A:A' },
+    bank:   { title: '帳戶',     header: ['名稱', '連動資產'], cols: 'A:B' },
     meta:   { title: '設定',     header: ['項目', '值'], cols: 'A:B' },
   };
   var ORDER = ['tx', 'budget', 'asset', 'hist', 'policy', 'bank', 'meta'];
@@ -205,6 +205,8 @@
 
   /* ── 狀態 ↔ 表格列 ──────────────────────────────────────── */
 
+  var NO_LINK = '不連動';
+
   var num = function (v) { var n = parseFloat(v); return isFinite(n) ? n : 0; };
   var str = function (v) { return v == null ? '' : String(v); };
   var amountCell = function (v) { return String(v).trim() === '' ? '' : num(v); };
@@ -223,7 +225,8 @@
     (st.customAssetDefs || []).forEach(function (d) { customById[d.key] = d; });
     rows.asset = Object.keys(st.assets || {}).map(function (k) {
       var c = customById[k];
-      return [k, amountCell(st.assets[k]), c ? c.emoji : '', c ? 'Y' : 'N', c ? c.id : ''];
+      return [k, amountCell(st.assets[k]), c ? c.emoji : '', c ? 'Y' : 'N', c ? c.id : '',
+              (st.assetBaseAt || {})[k] || ''];
     });
     rows.hist = (st.assetHistory || []).map(function (r) {
       return [r.id, str(r.assetType), num(r.oldAmount), num(r.newAmount), str(r.date), str(r.time)];
@@ -231,7 +234,11 @@
     rows.policy = (st.policies || []).map(function (p) {
       return [p.id, str(p.name), str(p.type), str(p.company), amountCell(p.premium), str(p.freq), str(p.expiry)];
     });
-    rows.bank = (st.banks || []).map(function (b) { return [b]; });
+    // 連動資產：空白代表沒設定過（沿用預設），NO_LINK 代表使用者明確選了不連動
+    rows.bank = (st.banks || []).map(function (b) {
+      var v = (st.bankAsset || {})[b];
+      return [b, v === undefined ? '' : (v === '' ? NO_LINK : str(v))];
+    });
     var pr = st.profile || {};
     rows.meta = [
       ['更新時間', new Date().toISOString()],
@@ -263,16 +270,25 @@
     get('budget').forEach(function (r) { if (str(r[0])) budgets[str(r[0])] = amountBack(r[1]); });
     if (Object.keys(budgets).length) patch.budgets = budgets;
 
-    var assets = {}, defs = [];
+    var assets = {}, defs = [], baseAt = {};
     get('asset').forEach(function (r) {
       var key = str(r[0]);
       if (!key) return;
       assets[key] = amountBack(r[1]);
+      if (num(r[5])) baseAt[key] = num(r[5]);
       if (str(r[3]).toUpperCase() === 'Y') {
         defs.push({ id: num(r[4]) || Date.now() + defs.length, key: key, emoji: str(r[2]) || '💼' });
       }
     });
-    if (Object.keys(assets).length) { patch.assets = assets; patch.customAssetDefs = defs; }
+    if (Object.keys(assets).length) {
+      patch.assets = assets;
+      patch.customAssetDefs = defs;
+      // 舊試算表沒有基準時間欄位：補上「現在」，免得雲端拉下來以後
+      // 所有歷史交易突然一起灌進資產金額
+      var nowTs = Date.now();
+      Object.keys(assets).forEach(function (k) { if (!baseAt[k]) baseAt[k] = nowTs; });
+      patch.assetBaseAt = baseAt;
+    }
 
     patch.assetHistory = get('hist').map(function (r) {
       return { id: num(r[0]), assetType: str(r[1]), oldAmount: num(r[2]),
@@ -284,8 +300,16 @@
                premium: amountBack(r[4]), freq: str(r[5]) || '年繳', expiry: str(r[6]) || '—' };
     }).filter(function (p) { return p.name; });
 
-    var banks = get('bank').map(function (r) { return str(r[0]); }).filter(Boolean);
-    if (banks.length) patch.banks = banks;
+    var banks = [], bankAsset = {};
+    get('bank').forEach(function (r) {
+      var b = str(r[0]);
+      if (!b) return;
+      banks.push(b);
+      var v = str(r[1]);
+      if (v === NO_LINK) bankAsset[b] = '';
+      else if (v) bankAsset[b] = v;
+    });
+    if (banks.length) { patch.banks = banks; patch.bankAsset = bankAsset; }
 
     var meta = {};
     get('meta').forEach(function (r) { meta[str(r[0])] = r[1]; });
