@@ -5,7 +5,7 @@
    · 外部資源（字型、jsQR、Tesseract 語言模型）：用到才快取
    改版時記得把 VERSION 加一，舊快取會在啟用階段被清掉。
    ────────────────────────────────────────────────────────────── */
-const VERSION = 'v3';
+const VERSION = 'v4';
 const SHELL_CACHE = 'financeapp-shell-' + VERSION;
 const RUNTIME_CACHE = 'financeapp-runtime-' + VERSION;
 
